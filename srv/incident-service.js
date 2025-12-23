@@ -41,14 +41,14 @@ class IncidentService extends cds.ApplicationService {
 
     const { Incidents, User } = this.entities
 
-    const {incidentID, userID} = req.data
+    const {incidentID, userId} = req.data
 
     if (!incidentID) {
         return req.error(400, 'incidentID is required')
       }
 
-    if (!userID) {
-        return req.error(400, 'userID is required')
+    if (!userId) {
+        return req.error(400, 'userId is required')
       }
 
     const incident = await SELECT.one.from(Incidents).where({ID: incidentID})
@@ -61,17 +61,17 @@ class IncidentService extends cds.ApplicationService {
         return req.error(400, 'Incident is already closed')
       }
 
-    const user =  await SELECT.one.from(User).where({userId: userID})
+    const user =  await SELECT.one.from(User).where({userId: userId})
 
     if(!user) return req.error(404, 'Invalid user id')
 
     if (incident.assignedTo_userId) return req.error(403, 'Incident is already assigned to user')
     else {
 
-        await UPDATE(Incidents).set({ assignedTo_userId: userID }).where({ ID: incidentID });
+        await UPDATE(Incidents).set({ assignedTo_userId: userId }).where({ ID: incidentID });
         LOG.info('Incident Assigned successfully', {
             incidentID,
-            assignedTo: userID, 
+            assignedTo: userId, 
             entity: 'Incidents',
             caller: req.user.id 
         })

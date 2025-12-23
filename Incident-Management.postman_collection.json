@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "incident-management-api",
     "name": "Incident Management API",
-    "description": "Postman collection for Incident Management CAP service (clean, regenerated).",
+    "description": "Postman collection for Incident Management CAP service",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -46,7 +46,7 @@
                 "Incidents({{incidentId}})"
               ]
             },
-            "description": "Retrieve a specific incident by ID"
+            "description": "Retrieve a specific incident by ID (UUID)"
           }
         },
         {
@@ -61,7 +61,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"New Incident\",\n  \"description\": \"Description of the incident\",\n  \"status\": \"OPEN\",\n  \"priority\": \"MEDIUM\",\n  \"category_code\": \"HW\",\n  \"country_code\": \"DE\"\n}",
+              "raw": "{\n  \"title\": \"New Incident\",\n  \"description\": \"Description of the incident\",\n  \"status\": \"OPEN\",\n  \"priority\": \"MEDIUM\",\n  \"category_code\": \"TECH\",\n  \"country_code\": \"US\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -160,7 +160,33 @@
                 }
               ]
             },
-            "description": "Get incidents filtered by status"
+            "description": "Get incidents filtered by status (OPEN, IN_PROGRESS, CLOSED)"
+          }
+        },
+        {
+          "name": "Filter Incidents by Priority",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Incidents?$filter=priority eq 'CRITICAL'",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Incidents"
+              ],
+              "query": [
+                {
+                  "key": "$filter",
+                  "value": "priority eq 'CRITICAL'"
+                }
+              ]
+            },
+            "description": "Get incidents filtered by priority (LOW, MEDIUM, HIGH, CRITICAL)"
           }
         }
       ]
@@ -187,6 +213,26 @@
             },
             "description": "Retrieve all incident categories (readonly)"
           }
+        },
+        {
+          "name": "Get Category by Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Category('TECH')",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Category('TECH')"
+              ]
+            },
+            "description": "Retrieve a specific category by code"
+          }
         }
       ]
     },
@@ -212,6 +258,26 @@
             },
             "description": "Retrieve all users"
           }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/User('{{userId}}')",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "User('{{userId}}')"
+              ]
+            },
+            "description": "Retrieve a specific user by userId"
+          }
         }
       ]
     },
@@ -230,7 +296,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"incidentID\": \"{{incidentId}}\"\n}",
+              "raw": "{\n  \"incidentId\": \"{{incidentId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -249,7 +315,7 @@
                 "closeIncident"
               ]
             },
-            "description": "Close an incident by setting its status to CLOSED"
+            "description": "Close an incident by setting its status to CLOSED. Parameter: incidentId (String)"
           }
         },
         {
@@ -264,7 +330,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"incidentID\": \"{{incidentId}}\",\n  \"userID\": \"{{userId}}\"\n}",
+              "raw": "{\n  \"incidentID\": \"{{incidentId}}\",\n  \"userId\": \"{{userId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -283,7 +349,7 @@
                 "assignIncident"
               ]
             },
-            "description": "Assign an incident to a user"
+            "description": "Assign an incident to a user. Parameters: incidentID (UUID), userId (String)"
           }
         }
       ]
@@ -308,7 +374,7 @@
                 "incidentStats()"
               ]
             },
-            "description": "Get statistics about incidents (total, open, closed)"
+            "description": "Get statistics about incidents (totalIncidents, openIncidents, closedIncidents)"
           }
         }
       ]
@@ -322,15 +388,16 @@
     },
     {
       "key": "incidentId",
-      "value": "9f1a3b6e-4c9d-4c3a-b7a0-1a2b3c4d5e60",
-      "type": "string"
+      "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "type": "string",
+      "description": "UUID of an incident from your test data"
     },
     {
       "key": "userId",
-      "value": "u1001",
-      "type": "string"
+      "value": "john.doe",
+      "type": "string",
+      "description": "User ID from UserReference entity"
     }
   ]
 }
-
 
