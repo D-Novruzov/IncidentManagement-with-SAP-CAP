@@ -1,0 +1,7 @@
+ID;title;description;status;priority;category_code;country_code;assigedTo_userId
+9f1a3b6e-4c9d-4c3a-b7a0-1a2b3c4d5e60;Laptop not starting;"User reports that their laptop does not power on.";OPEN;HIGH;HW;DE;u1001
+2a7c9e1d-5b2f-46a8-9c34-7d2e5f9a1b23;VPN connection failing;"VPN client disconnects every few minutes when working from home.";IN_PROGRESS;MEDIUM;NET;US;u1002
+7c3e2d1b-8a9f-4e2b-9c1d-3f4a5b6c7d8e;Cannot access SAP Fiori app;"User gets authorization error when opening the Purchase Orders app.";OPEN;CRITICAL;ACC;GB;u1003
+4e5f6a7b-1c2d-4e3f-9a8b-0c1d2e3f4a5b;Email client crashes on send;"Outlook crashes whenever sending an email with large attachments.";CLOSED;LOW;SW;FR;u1004
+
+

@@ -1,0 +1,7 @@
+code;name;description;isActive
+HW;Hardware;"Issues related to physical devices (laptops, phones, printers, etc.)";true
+SW;Software;"Issues related to applications, operating systems, or middleware";true
+NET;Network;"Connectivity, VPN, and general network-related issues";true
+ACC;Access;"User access, permissions, and authentication related issues";true
+
+

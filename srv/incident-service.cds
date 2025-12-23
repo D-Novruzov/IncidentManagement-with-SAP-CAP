@@ -7,7 +7,7 @@ service IncidentService {
     entity User as projection on my.UserReference;
     
     action closeIncident(incidentId: String);
-    action assignIncident(incidentId: String);
+    action assignIncident(incidentID: UUID, userId: String);
 
     function incidentStats() returns {
         totalIncidents: Integer;

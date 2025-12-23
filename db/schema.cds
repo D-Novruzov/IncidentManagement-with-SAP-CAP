@@ -41,20 +41,20 @@ entity UserReference {
 }
 
 type Status : String enum {
-  OPEN,
-  IN_PROGRESS,
+  OPEN;
+  IN_PROGRESS;
   CLOSED
 };
 
 type Priority : String enum {
-  LOW,
-  MEDIUM,
-  HIGH,
+  LOW;
+  MEDIUM;
+  HIGH;
   CRITICAL
 };
 
 type Action : String enum {
-  CREATE,
-  UPDATE,
+  CREATE;
+  UPDATE;
   CLOSE
 };
