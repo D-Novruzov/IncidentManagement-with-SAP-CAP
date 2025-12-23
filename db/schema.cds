@@ -11,7 +11,7 @@ entity Incident : managed {
   priority        : Priority @mandatory;
 
   category        : Association to IncidentCategory @mandatory;
-  country         : Country; // This is now correctly imported and used
+  country         : Country; 
 
   assigedTo       : Association to UserReference;
 }

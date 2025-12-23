@@ -5,7 +5,7 @@ class IncidentService extends cds.ApplicationService {
 
   async init() {
     this.on('closeIncident', this.closeIncident)
-    this.on('assignIncident', this.assignIncident)
+    this.on('assignIncident', (req) => this.assignIncident(req))
     this.on('incidentStats', this.incidentStats)
     return super.init()
   }
@@ -13,8 +13,9 @@ class IncidentService extends cds.ApplicationService {
 
   async closeIncident(req) {
     const { Incidents } = this.entities
-    const { incidentId } = req.data
-
+    console.log(Incidents)
+    console.log('this is req', req)
+    const  incidentId  = req
     if (!incidentId) {
       return req.error(400, 'incidentId is required')
     }
@@ -37,12 +38,15 @@ class IncidentService extends cds.ApplicationService {
 
     return { ID: incidentId, status: 'CLOSED' }
   }
+
+
   async assignIncident(req) {
+
 
     const { Incidents, User } = this.entities
 
     const {incidentID, userId} = req.data
-
+    
     if (!incidentID) {
         return req.error(400, 'incidentID is required')
       }
