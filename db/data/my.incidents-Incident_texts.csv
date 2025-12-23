@@ -1,0 +1,21 @@
+ID;locale;description
+a1b2c3d4-e5f6-7890-abcd-ef1234567890;en;Production server is not responding
+a1b2c3d4-e5f6-7890-abcd-ef1234567890;de;Produktionsserver antwortet nicht
+b2c3d4e5-f6a7-8901-bcde-f12345678901;en;Unable to connect to corporate VPN
+b2c3d4e5-f6a7-8901-bcde-f12345678901;de;Verbindung zum Unternehmens-VPN nicht möglich
+c3d4e5f6-a7b8-9012-cdef-123456789012;en;User forgot password and needs reset
+c3d4e5f6-a7b8-9012-cdef-123456789012;de;Benutzer hat Passwort vergessen und benötigt Zurücksetzung
+d4e5f6a7-b8c9-0123-def1-234567890123;en;Critical queries timing out in production
+d4e5f6a7-b8c9-0123-def1-234567890123;de;Kritische Abfragen laufen in der Produktion ab
+e5f6a7b8-c9d0-1234-ef12-345678901234;en;Office printer showing error messages
+e5f6a7b8-c9d0-1234-ef12-345678901234;de;Bürodrucker zeigt Fehlermeldungen an
+f6a7b8c9-d0e1-2345-f123-456789012345;en;CRM application crashes on startup
+f6a7b8c9-d0e1-2345-f123-456789012345;de;CRM-Anwendung stürzt beim Start ab
+a7b8c9d0-e1f2-3456-1234-567890123456;en;Multiple failed login attempts detected
+a7b8c9d0-e1f2-3456-1234-567890123456;de;Mehrere fehlgeschlagene Anmeldeversuche erkannt
+b8c9d0e1-f2a3-4567-2345-678901234567;en;Outlook email synchronization issues
+b8c9d0e1-f2a3-4567-2345-678901234567;de;Probleme mit der Outlook-E-Mail-Synchronisierung
+c9d0e1f2-a3b4-5678-3456-789012345678;en;Need firewall rule update for new service
+c9d0e1f2-a3b4-5678-3456-789012345678;de;Firewall-Regel-Update für neuen Service erforderlich
+d0e1f2a3-b4c5-6789-4567-890123456789;en;Nightly backup job failed with errors
+d0e1f2a3-b4c5-6789-4567-890123456789;de;Nächtlicher Backup-Job mit Fehlern fehlgeschlagen

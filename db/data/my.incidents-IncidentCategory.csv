@@ -1,0 +1,8 @@
+code;name;description;isActive
+TECH;Technical Issue;Technical problems and system errors;true
+NETWORK;Network Issue;Network connectivity and infrastructure issues;true
+SECURITY;Security Issue;Security vulnerabilities and threats;true
+ACCESS;Access Issue;Access rights and permission problems;true
+HARDWARE;Hardware Issue;Hardware failures and equipment problems;true
+SOFTWARE;Software Issue;Software bugs and application errors;true
+DATA;Data Issue;Data integrity and database problems;true

@@ -1,0 +1,22 @@
+code;locale;name
+TECH;en;Technical Issue
+TECH;de;Technisches Problem
+TECH;fr;Problème Technique
+NETWORK;en;Network Issue
+NETWORK;de;Netzwerkproblem
+NETWORK;fr;Problème de Réseau
+SECURITY;en;Security Issue
+SECURITY;de;Sicherheitsproblem
+SECURITY;fr;Problème de Sécurité
+ACCESS;en;Access Issue
+ACCESS;de;Zugriffsproblem
+ACCESS;fr;Problème d'Accès
+HARDWARE;en;Hardware Issue
+HARDWARE;de;Hardwareproblem
+HARDWARE;fr;Problème Matériel
+SOFTWARE;en;Software Issue
+SOFTWARE;de;Softwareproblem
+SOFTWARE;fr;Problème Logiciel
+DATA;en;Data Issue
+DATA;de;Datenproblem
+DATA;fr;Problème de Données

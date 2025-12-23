@@ -9,36 +9,82 @@ class IncidentService extends cds.ApplicationService {
     return super.init()
   }
 
+
   async closeIncident(req) {
     const { Incidents } = this.entities
-    const { incidentID } = req.data
+    const { incidentId } = req.data
 
-    if (!incidentID) {
-      return req.error(400, 'incidentID is required')
+    if (!incidentId) {
+      return req.error(400, 'incidentId is required')
     }
 
     const incident = await SELECT.one
       .from(Incidents)
-      .where({ ID: incidentID })
+      .where({ ID: incidentId })
 
     if (!incident) {
       return req.error(404, 'Incident not found')
     }
 
-    if (incident.status === 'closed') {
-      return req.error(400, 'Incident must be open to be closed')
+    if (incident.status === 'CLOSED') {
+      return req.error(400, 'Incident is already closed')
     }
 
     await UPDATE(Incidents)
-      .set({ status: 'closed' })
-      .where({ ID: incidentID })
+      .set({ status: 'CLOSED' })
+      .where({ ID: incidentId })
 
-    return {
-      message: 'Incident closed successfully',
-      ID: incidentID
-    }
+    return { ID: incidentId, status: 'CLOSED' }
   }
 
+ 
+  async assignIncident(req) {
+    const { Incidents } = this.entities
+    const { incidentId } = req.data
+
+    if (!incidentId) {
+      return req.error(400, 'incidentId is required')
+    }
+
+    const incident = await SELECT.one
+      .from(Incidents)
+      .where({ ID: incidentId })
+
+    if (!incident) {
+      return req.error(404, 'Incident not found')
+    }
+
+    await UPDATE(Incidents)
+      .set({ status: 'IN_PROGRESS' })
+      .where({ ID: incidentId })
+
+    return { ID: incidentId, status: 'IN_PROGRESS' }
+  }
+
+
+  async incidentStats() {
+    const { Incidents } = this.entities
+
+    const total = await SELECT.one
+      .from(Incidents)
+      .columns`count(*) as count`
+
+    const open = await SELECT.one
+      .from(Incidents)
+      .where({ status: 'OPEN' })
+      .columns`count(*) as count`
+
+    const closed = await SELECT.one
+      .from(Incidents)
+      .where({ status: 'CLOSED' })
+      .columns`count(*) as count`
+
+    return {
+      totalIncidents: total.count,
+      openIncidents: open.count,
+      closedIncidents: closed.count
+    }
+  }
 }
 
 module.exports = IncidentService

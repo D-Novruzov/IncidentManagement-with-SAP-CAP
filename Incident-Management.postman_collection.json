@@ -1,0 +1,336 @@
+{
+  "info": {
+    "_postman_id": "incident-management-api",
+    "name": "Incident Management API",
+    "description": "Postman collection for Incident Management CAP service (clean, regenerated).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Incidents",
+      "item": [
+        {
+          "name": "Get All Incidents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Incidents"
+              ]
+            },
+            "description": "Retrieve all incidents"
+          }
+        },
+        {
+          "name": "Get Incident by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Incidents({{incidentId}})",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Incidents({{incidentId}})"
+              ]
+            },
+            "description": "Retrieve a specific incident by ID"
+          }
+        },
+        {
+          "name": "Create Incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Incident\",\n  \"description\": \"Description of the incident\",\n  \"status\": \"OPEN\",\n  \"priority\": \"MEDIUM\",\n  \"category_code\": \"HW\",\n  \"country_code\": \"DE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Incidents"
+              ]
+            },
+            "description": "Create a new incident"
+          }
+        },
+        {
+          "name": "Update Incident",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Incident Title\",\n  \"status\": \"IN_PROGRESS\",\n  \"priority\": \"HIGH\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Incidents({{incidentId}})",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Incidents({{incidentId}})"
+              ]
+            },
+            "description": "Update an existing incident"
+          }
+        },
+        {
+          "name": "Delete Incident",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Incidents({{incidentId}})",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Incidents({{incidentId}})"
+              ]
+            },
+            "description": "Delete an incident"
+          }
+        },
+        {
+          "name": "Filter Incidents by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Incidents?$filter=status eq 'OPEN'",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Incidents"
+              ],
+              "query": [
+                {
+                  "key": "$filter",
+                  "value": "status eq 'OPEN'"
+                }
+              ]
+            },
+            "description": "Get incidents filtered by status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/Category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "Category"
+              ]
+            },
+            "description": "Retrieve all incident categories (readonly)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/User",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "User"
+              ]
+            },
+            "description": "Retrieve all users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Actions",
+      "item": [
+        {
+          "name": "Close Incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"incidentID\": \"{{incidentId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/closeIncident",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "closeIncident"
+              ]
+            },
+            "description": "Close an incident by setting its status to CLOSED"
+          }
+        },
+        {
+          "name": "Assign Incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"incidentID\": \"{{incidentId}}\",\n  \"userID\": \"{{userId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/assignIncident",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "assignIncident"
+              ]
+            },
+            "description": "Assign an incident to a user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Functions",
+      "item": [
+        {
+          "name": "Get Incident Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/v4/incident/incidentStats()",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "odata",
+                "v4",
+                "incident",
+                "incidentStats()"
+              ]
+            },
+            "description": "Get statistics about incidents (total, open, closed)"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4004",
+      "type": "string"
+    },
+    {
+      "key": "incidentId",
+      "value": "9f1a3b6e-4c9d-4c3a-b7a0-1a2b3c4d5e60",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "u1001",
+      "type": "string"
+    }
+  ]
+}
+
+
