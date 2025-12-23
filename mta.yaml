@@ -24,7 +24,11 @@ modules:
         properties:
           srv-url: ${default-url}
     requires:
-      []
+      - name: app-logs
 
 resources:
-  []
+ - name: app-logs # This must align perfectly with the '-' above
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-plan: lite
