@@ -1,4 +1,5 @@
 const cds = require('@sap/cds')
+const  LOG = cds.log('incident-service')
 
 class IncidentService extends cds.ApplicationService {
 
@@ -36,53 +37,77 @@ class IncidentService extends cds.ApplicationService {
 
     return { ID: incidentId, status: 'CLOSED' }
   }
-
- 
   async assignIncident(req) {
-    const { Incidents } = this.entities
-    const { incidentId } = req.data
 
-    if (!incidentId) {
-      return req.error(400, 'incidentId is required')
-    }
+    const { Incidents, User } = this.entities
 
-    const incident = await SELECT.one
-      .from(Incidents)
-      .where({ ID: incidentId })
+    const {incidentID, userID} = req.data
+
+    if (!incidentID) {
+        return req.error(400, 'incidentID is required')
+      }
+
+    if (!userID) {
+        return req.error(400, 'userID is required')
+      }
+
+    const incident = await SELECT.one.from(Incidents).where({ID: incidentID})
 
     if (!incident) {
-      return req.error(404, 'Incident not found')
+        return req.error(404, 'Invalid incident id')
+      }
+      
+    if (incident.status === 'CLOSED') {
+        return req.error(400, 'Incident is already closed')
+      }
+
+    const user =  await SELECT.one.from(User).where({userId: userID})
+
+    if(!user) return req.error(404, 'Invalid user id')
+
+    if (incident.assignedTo_userId) return req.error(403, 'Incident is already assigned to user')
+    else {
+
+        await UPDATE(Incidents).set({ assignedTo_userId: userID }).where({ ID: incidentID });
+        LOG.info('Incident Assigned successfully', {
+            incidentID,
+            assignedTo: userID, 
+            entity: 'Incidents',
+            caller: req.user.id 
+        })
     }
-
-    await UPDATE(Incidents)
-      .set({ status: 'IN_PROGRESS' })
-      .where({ ID: incidentId })
-
-    return { ID: incidentId, status: 'IN_PROGRESS' }
   }
-
 
   async incidentStats() {
     const { Incidents } = this.entities
 
-    const total = await SELECT.one
+    const [{ count: totalIncidents }] = await SELECT
       .from(Incidents)
-      .columns`count(*) as count`
+      .columns([
+        { func: 'count', args: [{ ref: ['ID'] }], as: 'count' }
+      ])
 
-    const open = await SELECT.one
+    const [{ count: openIncidents }] = await SELECT
       .from(Incidents)
       .where({ status: 'OPEN' })
-      .columns`count(*) as count`
+      .columns([
+        { func: 'count', args: [{ ref: ['ID'] }], as: 'count' }
+      ])
 
-    const closed = await SELECT.one
+    const [{ count: closedIncidents }] = await SELECT
       .from(Incidents)
       .where({ status: 'CLOSED' })
-      .columns`count(*) as count`
+      .columns([
+        { func: 'count', args: [{ ref: ['ID'] }], as: 'count' }
+      ])
 
+    LOG.info('Incidents stats retrieved', {
+        entity: 'Incidents'
+    })
     return {
-      totalIncidents: total.count,
-      openIncidents: open.count,
-      closedIncidents: closed.count
+        totalIncidents,
+        openIncidents,
+        closedIncidents
     }
   }
 }
