@@ -5,8 +5,8 @@ service IncidentService {
     @readonly
     entity Category as projection on my.IncidentCategory;
     @(requires: 'admin') entity User as projection on my.UserReference;
-    
-    action closeIncident(incidentId: String);
+    entity AuditLog as projection on my.AuditLog;
+    action closeIncident(incidentId: String) returns {ID: String; status: String };
     action assignIncident(incidentID: UUID, userId: String);
     action cleanupClosedIncidents() returns {
         message: String;
