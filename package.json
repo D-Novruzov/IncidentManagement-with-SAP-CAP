@@ -5,7 +5,8 @@
   "dependencies": {
     "@sap/cds": "^9",
     "@sap/logging": "^9.0.0",
-    "express": "^4"
+    "express": "^4",
+    "@sap/xssec": "^4"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2",
@@ -21,12 +22,21 @@
         "users": {
           "admin": {
             "password": "admin",
-            "roles": ["admin"]
+            "roles": [
+              "admin"
+            ]
           },
           "user": {
             "password": "user",
-            "roles": ["user"]
+            "roles": [
+              "user"
+            ]
           }
+        }
+      },
+      "[production]": {
+        "auth": {
+          "kind": "xsuaa"
         }
       }
     }

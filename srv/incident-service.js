@@ -1,4 +1,5 @@
 const cds = require("@sap/cds");
+
 const LOG = cds.log("incident-service");
 
 class IncidentService extends cds.ApplicationService {
@@ -6,6 +7,7 @@ class IncidentService extends cds.ApplicationService {
     this.on("closeIncident", this.closeIncident);
     this.on("assignIncident", this.assignIncident);
     this.on("incidentStats", this.incidentStats);
+    this.on('cleanupClosedIncidents', this.cleanupClosedIncidents)
     return super.init();
   }
 
@@ -106,6 +108,21 @@ class IncidentService extends cds.ApplicationService {
       openIncidents,
       closedIncidents,
     };
+  }
+
+  async cleanupClosedIncidents(req) {
+    console.log('event triggered')
+    console.log(req)
+    const {Incidents} = this.entities
+
+    const deletedCount = await DELETE.from(Incidents).where({status: 'CLOSED'})
+
+    if(!deletedCount) return cds.error({code: 200, message: 'There are no closed incidents' })
+
+    return {
+      message: 'Incidents successfully cleaned up',
+      deletedCount
+    }
   }
 }
 

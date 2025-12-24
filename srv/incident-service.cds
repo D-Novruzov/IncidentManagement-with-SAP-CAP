@@ -8,6 +8,9 @@ service IncidentService {
     
     action closeIncident(incidentId: String);
     action assignIncident(incidentID: UUID, userId: String);
+    action cleanupClosedIncidents() returns {
+        message: String;
+        deletedCount: Integer;   };
 
     function incidentStats() returns {
         totalIncidents: Integer;

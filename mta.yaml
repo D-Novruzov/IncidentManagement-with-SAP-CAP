@@ -20,11 +20,12 @@ modules:
     build-parameters:
       builder: npm-ci
     provides:
-      - name: srv-api # required by consumers of CAP services (e.g. approuter)
-        properties:
-          srv-url: ${default-url}
+      - name: srv-api
+        srv-url: ${default-url}
     requires:
       - name: app-logs
+      - name: incident-job-scheduler
+      - name: incident-managment-auth
 
 resources:
   - name: app-logs
@@ -32,3 +33,22 @@ resources:
     parameters:
       service: application-logging
       service-plan: lite
+  - name: incident-job-scheduler
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: jobscheduler
+      service-plan: standard
+  - name: incident-managment-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: incident-managment-${org}-${space}
+        tenant-mode: dedicated
+        role-collections:
+          - name: 'admin (incident-managment ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.admin'
