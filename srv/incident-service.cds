@@ -16,5 +16,6 @@ service IncidentService {
         totalIncidents: Integer;
         openIncidents: Integer;
         closedIncidents: Integer;
+        isConsistent: Boolean;
     };
 }

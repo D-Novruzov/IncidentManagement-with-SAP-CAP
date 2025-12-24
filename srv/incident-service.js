@@ -195,7 +195,7 @@ class IncidentService extends cds.ApplicationService {
     const [{ count: closedIncidents }] = await SELECT.from(Incidents)
       .where({ status: "CLOSED" })
       .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]);
-
+    const isConsistent = totalIncidents == openIncidents + closedIncidents
     LOG.info("Incidents stats retrieved", {
       entity: "Incidents",
     });
@@ -203,6 +203,7 @@ class IncidentService extends cds.ApplicationService {
       totalIncidents,
       openIncidents,
       closedIncidents,
+      isConsistent
     };
   }
 
