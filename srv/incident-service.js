@@ -19,9 +19,31 @@ class IncidentService extends cds.ApplicationService {
     this.before('assignIncident', this.checkAssignIncident)
     this.on("assignIncident", this.assignIncident);
     
+
     this.on("incidentStats", this.incidentStats);
-    this.on('cleanupClosedIncidents', this.cleanupClosedIncidents)
+
+
+    this.on('runScheduledJob', async (req) => {
+      return this.runScheduledJob(req);
+    })
     return super.init();
+  }
+
+
+  async runScheduledJob(req) {
+    LOG.info('Scheduled job triggered');
+  
+    cds.spawn(async () => {
+      try {
+        const deletedCount = await this.cleanupClosedIncidents();
+        LOG.info('Scheduled job finished', { deletedCount });
+      } catch (err) {
+        LOG.error('Scheduled job failed', err);
+      }
+    });
+  
+
+    return { message: 'Job started' };
   }
   /**
    * Creates an audit log entry for tracking changes to entities
@@ -216,19 +238,14 @@ class IncidentService extends cds.ApplicationService {
    * @returns {string} return.message - Success message
    * @returns {number} return.deletedCount - Number of incidents deleted
    */
-  async cleanupClosedIncidents(req) {
-    console.log('event triggered')
-    console.log(req)
-    const {Incidents } = this.entities
-
-    const deletedCount = await DELETE.from(Incidents).where({status: 'CLOSED'})
-
-    if(!deletedCount) return cds.error({code: 200, message: 'There are no closed incidents' })
-
-    return {
-      message: 'Incidents successfully cleaned up',
-      deletedCount
-    }
+  async cleanupClosedIncidents() {
+    const { Incidents } = this.entities;
+  
+    const deletedCount = await DELETE
+      .from(Incidents)
+      .where({ status: 'CLOSED' });
+  
+    return deletedCount;
   }
 }
 

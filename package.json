@@ -34,9 +34,23 @@
           }
         }
       },
+      "jobscheduler": {
+        "kind": "rest",
+        "credentials": {
+          "url": "http://localhost:4004",
+          "user": "admin",
+          "password": "admin"
+        },
+        "[production]": {
+          "kind": "jobscheduler"
+        }
+      },
       "[production]": {
         "auth": {
           "kind": "xsuaa"
+        },
+        "jobscheduler": {
+          "kind": "jobscheduler"
         }
       }
     }
