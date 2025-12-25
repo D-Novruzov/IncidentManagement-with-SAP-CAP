@@ -14,36 +14,34 @@ class IncidentService extends cds.ApplicationService {
    * @returns {Promise<void>}
    */
   async init() {
-    this.before('closeIncident', this.checkIncident)
+    this.before("closeIncident", this.checkIncident);
     this.on("closeIncident", this.closeIncident);
-    this.before('assignIncident', this.checkAssignIncident)
+    this.before("assignIncident", this.checkAssignIncident);
     this.on("assignIncident", this.assignIncident);
-    
+
+    this.on("reportIncident", this.reportIncident);
 
     this.on("incidentStats", this.incidentStats);
 
-
-    this.on('runScheduledJob', async (req) => {
+    this.on("runScheduledJob", async (req) => {
       return this.runScheduledJob(req);
-    })
+    });
     return super.init();
   }
 
-
   async runScheduledJob(req) {
-    LOG.info('Scheduled job triggered');
-  
+    LOG.info("Scheduled job triggered");
+
     cds.spawn(async () => {
       try {
         const deletedCount = await this.cleanupClosedIncidents();
-        LOG.info('Scheduled job finished', { deletedCount });
+        LOG.info("Scheduled job finished", { deletedCount });
       } catch (err) {
-        LOG.error('Scheduled job failed', err);
+        LOG.error("Scheduled job failed", err);
       }
     });
-  
 
-    return { message: 'Job started' };
+    return { message: "Job started" };
   }
   /**
    * Creates an audit log entry for tracking changes to entities
@@ -56,20 +54,28 @@ class IncidentService extends cds.ApplicationService {
    * @param {string} newValue - New value after the change
    * @returns {Promise<void>}
    */
-  async auditLogger(entityType, entityKey, action, fieldChanged, oldValue, newValue)  {
-    const {AuditLog} = this.entities;
+  async auditLogger(
+    entityType,
+    entityKey,
+    action,
+    fieldChanged,
+    oldValue,
+    newValue
+  ) {
+    const { AuditLog } = this.entities;
     await INSERT.into(AuditLog).entries({
       entityType: entityType || null,
-      entityKey : entityKey || null,
+      entityKey: entityKey || null,
       action: action || null,
       fieldChanged: fieldChanged || null,
       oldValue: oldValue || null,
-      newValue : newValue || null 
+      newValue: newValue || null,
     });
-    LOG.info(`Audit log created: ${action} on ${entityType}`, { entityKey, fieldChanged });
+    LOG.info(`Audit log created: ${action} on ${entityType}`, {
+      entityKey,
+      fieldChanged,
+    });
   }
-
-
 
   /**
    * Validates incident existence and status before closing operations
@@ -80,10 +86,11 @@ class IncidentService extends cds.ApplicationService {
    * @returns {Promise<void>}
    */
   async checkIncident(req) {
-    const {Incidents} = this.entities;
-    const incidentId = req.data?.incidentId || req
-    if (!incidentId)
-       {throw cds.error({code: 400, message: 'Incident id is not correct'})}
+    const { Incidents } = this.entities;
+    const incidentId = req.data?.incidentId || req;
+    if (!incidentId) {
+      throw cds.error({ code: 400, message: "Incident id is not correct" });
+    }
 
     const incident = await SELECT.one.from(Incidents).where({ ID: incidentId });
 
@@ -94,7 +101,6 @@ class IncidentService extends cds.ApplicationService {
     if (incident.status === "CLOSED") {
       throw cds.error({ code: 400, message: "Incident is already closed" });
     }
-
   }
 
   /**
@@ -108,9 +114,9 @@ class IncidentService extends cds.ApplicationService {
    * @returns {Promise<void>}
    */
   async checkAssignIncident(req) {
-    const {Incidents, UserReference } = this.entities;
-    const incidentID = req.data?.incidentID || req
-    const userId = req.data?.userId || req
+    const { Incidents, UserReference } = this.entities;
+    const incidentID = req.data?.incidentID || req;
+    const userId = req.data?.userId || req;
     if (!incidentID) {
       throw cds.error({ code: 400, message: "incidentID is required" });
     }
@@ -120,9 +126,8 @@ class IncidentService extends cds.ApplicationService {
     }
     const incident = await SELECT.one.from(Incidents).where({ ID: incidentID });
 
-
     const user = await SELECT.one.from(UserReference).where({ userId: userId });
-    
+
     if (!incident) {
       throw cds.error({ code: 404, message: "Invalid incident id" });
     }
@@ -139,7 +144,6 @@ class IncidentService extends cds.ApplicationService {
         message: "Incident is already assigned to user",
       });
     }
-
   }
 
   /**
@@ -151,7 +155,7 @@ class IncidentService extends cds.ApplicationService {
    * // Returns: { ID: "abc-123", status: "CLOSED" }
    */
   async closeIncident(req) {
-    const { Incidents, AuditLog  } = this.entities;
+    const { Incidents, AuditLog } = this.entities;
 
     const incidentId = req.data?.incidentId || req;
 
@@ -159,8 +163,15 @@ class IncidentService extends cds.ApplicationService {
 
     const oldStatus = incident.status;
     await UPDATE(Incidents).set({ status: "CLOSED" }).where({ ID: incidentId });
-    await this.auditLogger('Incident', incidentId, 'CLOSE', 'status', oldStatus, 'CLOSED');
-    
+    await this.auditLogger(
+      "Incident",
+      incidentId,
+      "CLOSE",
+      "status",
+      oldStatus,
+      "CLOSED"
+    );
+
     LOG.info("Incident closed successfully", { incidentId });
     return { ID: incidentId, status: "CLOSED" };
   }
@@ -185,7 +196,14 @@ class IncidentService extends cds.ApplicationService {
       .set({ assignedTo_userId: userId })
       .where({ ID: incidentID });
 
-    await this.auditLogger('Incident', incidentID, 'UPDATE', 'assignedTo_userId', oldAssignee || '', userId);
+    await this.auditLogger(
+      "Incident",
+      incidentID,
+      "UPDATE",
+      "assignedTo_userId",
+      oldAssignee || "",
+      userId
+    );
 
     LOG.info("Incident Assigned successfully", {
       incidentID,
@@ -193,6 +211,25 @@ class IncidentService extends cds.ApplicationService {
       entity: "Incidents",
       caller: req.user?.id,
     });
+  }
+
+  async reportIncident(incidentID, title, description, type, customer) {
+    console.log("incidentID:", incidentID);
+    console.log("title:", title);
+    console.log("description:", description);
+    console.log("type:", type);
+    console.log("customer:", customer);
+
+    // Add your incident reporting logic here
+
+    return {
+      ID: incidentID,
+      title,
+      description,
+      type,
+      customer,
+      message: "Incident reported successfully",
+    };
   }
 
   /**
@@ -217,7 +254,7 @@ class IncidentService extends cds.ApplicationService {
     const [{ count: closedIncidents }] = await SELECT.from(Incidents)
       .where({ status: "CLOSED" })
       .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]);
-    const isConsistent = totalIncidents == openIncidents + closedIncidents
+    const isConsistent = totalIncidents == openIncidents + closedIncidents;
     LOG.info("Incidents stats retrieved", {
       entity: "Incidents",
     });
@@ -225,7 +262,7 @@ class IncidentService extends cds.ApplicationService {
       totalIncidents,
       openIncidents,
       closedIncidents,
-      isConsistent
+      isConsistent,
     };
   }
 
@@ -240,11 +277,11 @@ class IncidentService extends cds.ApplicationService {
    */
   async cleanupClosedIncidents() {
     const { Incidents } = this.entities;
-  
-    const deletedCount = await DELETE
-      .from(Incidents)
-      .where({ status: 'CLOSED' });
-  
+
+    const deletedCount = await DELETE.from(Incidents).where({
+      status: "CLOSED",
+    });
+
     return deletedCount;
   }
 }

@@ -24,6 +24,14 @@ service IncidentService {
     
     action assignIncident(incidentID: UUID, userId: String);
     
+    action reportIncident(incidentID: UUID, title: String, description: String, type: my.IncidentType, customer: UUID) returns {
+      ID: UUID;
+      title: String;
+      description: String;
+      type: my.IncidentType;
+      customer: UUID;
+      message: String;
+    };
 
     function incidentStats() returns {
         totalIncidents: Integer;
