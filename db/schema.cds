@@ -2,6 +2,8 @@ using { managed, Country } from '@sap/cds/common';
 
 namespace my.incidents;
 
+
+@odata.draft.enabled
 entity Incident : managed {
   key ID          : UUID;
   title           : String(100) @mandatory;
