@@ -4,6 +4,8 @@ service IncidentService {
     @odata.draft.enabled
     entity Incidents as projection on my.Incident;
     
+    entity ReportIncident as projection on my.ReportIncident;
+    
     @readonly
     entity Category as projection on my.IncidentCategory;
     @requires: 'admin'

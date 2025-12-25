@@ -1,4 +1,4 @@
-ID;title;description;status;priority;category_code;country_code;assigedTo_userId
+ID;title;description;status;priority;category_code;country_code;assignedTo_userId
 a1b2c3d4-e5f6-7890-abcd-ef1234567890;Server Downtime;Production server is not responding;OPEN;CRITICAL;TECH;US;john.doe
 b2c3d4e5-f6a7-8901-bcde-f12345678901;VPN Connection Failed;Unable to connect to corporate VPN;IN_PROGRESS;HIGH;NETWORK;GB;jane.smith
 c3d4e5f6-a7b8-9012-cdef-123456789012;Password Reset Request;User forgot password and needs reset;CLOSED;LOW;ACCESS;DE;mike.wilson

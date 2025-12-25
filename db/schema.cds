@@ -18,6 +18,13 @@ entity Incident : managed {
   assignedTo      : Association to UserReference;
 }
 
+entity ReportIncident: managed {
+  key ID          : UUID;
+  title           : String;
+  description     : String;
+  type            : IncidentType;
+  customer        : Association to Customer;
+}
 entity Customer : managed {
   key ID              : UUID;
   customerNumber      : String(50);
@@ -50,6 +57,14 @@ entity UserReference {
   key userId      : String;
   email           : String(100) @mandatory;
   displayName     : String(100);
+}
+type IncidentType : String enum {
+  SYSTEM_OUTAGE;
+  APPLICATION_ERROR;
+  PERFORMANCE_ISSUE;
+  LOGIN_PROBLEM;
+  API_FAILURE;
+  DATA_SYNC_ISSUE;
 }
 
 type Status : String enum {
