@@ -7,8 +7,12 @@ service IncidentService {
     @readonly
     entity Category as projection on my.IncidentCategory;
     @requires: 'admin'
-    entity User as projection on my.UserReference;
+    entity UserReference as projection on my.UserReference;
     
+    @requires: 'admin'
+    entity Customer as projection on my.Customer;
+
+
     entity AuditLog as projection on my.AuditLog;
     
 

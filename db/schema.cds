@@ -15,9 +15,20 @@ entity Incident : managed {
   category        : Association to IncidentCategory @mandatory;
   country         : Country; 
 
-  assigedTo       : Association to UserReference;
+  assignedTo      : Association to UserReference;
 }
 
+entity Customer : managed {
+  key ID              : UUID;
+  customerNumber      : String(50);
+  firstname           : String(100) @mandatory;
+  lastname            : String(100) @mandatory;
+  email               : String(100) @mandatory;
+  phone               : String(20);
+  company             : String(200);
+  country             : Country;
+  isPremium           : Boolean default false;
+}
 entity IncidentCategory {
   key code        : String(10);
   name            : localized String(100);
@@ -28,8 +39,7 @@ entity IncidentCategory {
 entity AuditLog : managed {
   key ID          : UUID;
   entityType      : String(50);
-  entityKey       : UUID;
-
+  entityKey       : UUID; 
   action          : Action;
   fieldChanged    : String(50);
   oldValue        : String;

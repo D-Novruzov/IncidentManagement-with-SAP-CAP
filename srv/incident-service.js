@@ -108,7 +108,7 @@ class IncidentService extends cds.ApplicationService {
    * @returns {Promise<void>}
    */
   async checkAssignIncident(req) {
-    const {Incidents} = this.entities;
+    const {Incidents, UserReference } = this.entities;
     const incidentID = req.data?.incidentID || req
     const userId = req.data?.userId || req
     if (!incidentID) {
@@ -121,7 +121,7 @@ class IncidentService extends cds.ApplicationService {
     const incident = await SELECT.one.from(Incidents).where({ ID: incidentID });
 
 
-    const user = await SELECT.one.from(User).where({ userId: userId });
+    const user = await SELECT.one.from(UserReference).where({ userId: userId });
     
     if (!incident) {
       throw cds.error({ code: 404, message: "Invalid incident id" });
@@ -174,7 +174,7 @@ class IncidentService extends cds.ApplicationService {
    * @returns {Promise<void>}
    */
   async assignIncident(req) {
-    const { Incidents, User } = this.entities;
+    const { Incidents } = this.entities;
 
     const { incidentID, userId } = req.data || {};
 
