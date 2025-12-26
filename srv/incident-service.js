@@ -19,6 +19,9 @@ class IncidentService extends cds.ApplicationService {
     this.before("assignIncident", this.checkAssignIncident);
     this.on("assignIncident", this.assignIncident);
 
+
+
+    //Report Incident Action Function
     this.on("ReportIncidentAction", async (req) =>  {
       const { ReportIncidentEntity } = this.entities;
       const { incidentID, title, description, type } = req.data || {};
@@ -30,7 +33,8 @@ class IncidentService extends cds.ApplicationService {
         title,
         description,
         type,
-        customer: customer ? { ID: customer } : null
+        customer: customer ? { ID: customer } : null,
+        date: new Date()
       };
 
       try {
@@ -41,7 +45,8 @@ class IncidentService extends cds.ApplicationService {
           'CREATE',
           'ALL',
           '',
-          JSON.stringify(newEntry)
+          JSON.stringify(newEntry),
+          newEntry.date
         );
       } catch (err) {
         LOG.error('Failed to create reported incident', err);
@@ -56,6 +61,8 @@ class IncidentService extends cds.ApplicationService {
         customer,
         message: "Incident reported successfully",
       };
+
+
     });
 
     this.on("incidentStats", this.incidentStats);
@@ -124,20 +131,13 @@ class IncidentService extends cds.ApplicationService {
    */
   async checkIncident(req) {
     const { Incidents } = this.entities;
-    const incidentId = req.data?.incidentId || req;
-    if (!incidentId) {
-      throw cds.error({ code: 400, message: "Incident id is not correct" });
-    }
+    const incidentId = req.data?.incidentId || req.data?.incidentID;
+    if (!incidentId) throw cds.error({ code: 400, message: 'incidentId is required' });
 
     const incident = await SELECT.one.from(Incidents).where({ ID: incidentId });
+    if (!incident) throw cds.error({ code: 404, message: 'Incident not found' });
 
-    if (!incident) {
-      throw cds.error({ code: 404, message: "Incident not found" });
-    }
-
-    if (incident.status === "CLOSED") {
-      throw cds.error({ code: 400, message: "Incident is already closed" });
-    }
+    if (incident.status === 'CLOSED') throw cds.error({ code: 400, message: 'Incident is already closed' });
   }
 
   /**
@@ -152,35 +152,18 @@ class IncidentService extends cds.ApplicationService {
    */
   async checkAssignIncident(req) {
     const { Incidents, UserReference } = this.entities;
-    const incidentID = req.data?.incidentID || req;
-    const userId = req.data?.userId || req;
-    if (!incidentID) {
-      throw cds.error({ code: 400, message: "incidentID is required" });
-    }
+     const incidentID = req.data?.incidentID;
+     const userId = req.data?.userId;
+     if (!incidentID) throw cds.error({ code: 400, message: 'incidentID is required' });
+     if (!userId) throw cds.error({ code: 400, message: 'userId is required' });
 
-    if (!userId) {
-      throw cds.error({ code: 400, message: "userId is required" });
-    }
-    const incident = await SELECT.one.from(Incidents).where({ ID: incidentID });
+     const incident = await SELECT.one.from(Incidents).where({ ID: incidentID });
+     const user = await SELECT.one.from(UserReference).where({ userId: userId });
 
-    const user = await SELECT.one.from(UserReference).where({ userId: userId });
-
-    if (!incident) {
-      throw cds.error({ code: 404, message: "Invalid incident id" });
-    }
-
-    if (incident.status === "CLOSED") {
-      throw cds.error({ code: 400, message: "Incident is already closed" });
-    }
-    if (!user) {
-      throw cds.error({ code: 404, message: "Invalid user id" });
-    }
-    if (incident.assignedTo_userId) {
-      throw cds.error({
-        code: 403,
-        message: "Incident is already assigned to user",
-      });
-    }
+     if (!incident) throw cds.error({ code: 404, message: 'Invalid incident id' });
+     if (incident.status === 'CLOSED') throw cds.error({ code: 400, message: 'Incident is already closed' });
+     if (!user) throw cds.error({ code: 404, message: 'Invalid user id' });
+     if (incident.assignedTo_userId) throw cds.error({ code: 403, message: 'Incident is already assigned to user' });
   }
 
   /**
@@ -192,25 +175,45 @@ class IncidentService extends cds.ApplicationService {
    * // Returns: { ID: "abc-123", status: "CLOSED" }
    */
   async closeIncident(req) {
-    const { Incidents, AuditLog } = this.entities;
+    const { Incidents, ReportIncidentEntity, IncidentResolveTime } = this.entities;
+    const incidentId = req.data?.incidentId || req.data?.incidentID;
 
-    const incidentId = req.data?.incidentId || req;
+    if (!incidentId) {
+      return req.reject(400, 'incidentId is required');
+    }
 
+    // load incident and optional report record
     const incident = await SELECT.one.from(Incidents).where({ ID: incidentId });
+    if (!incident) {
+      return req.reject(404, 'Incident not found');
+    }
+
+    const report = ReportIncidentEntity ? await SELECT.one.from(ReportIncidentEntity).where({ ID: incidentId }) : null;
 
     const oldStatus = incident.status;
-    await UPDATE(Incidents).set({ status: "CLOSED" }).where({ ID: incidentId });
-    await this.auditLogger(
-      "Incident",
-      incidentId,
-      "CLOSE",
-      "status",
-      oldStatus,
-      "CLOSED"
-    );
+    const closedAt = new Date();
 
-    LOG.info("Incident closed successfully", { incidentId });
-    return { ID: incidentId, status: "CLOSED" };
+    try {
+      await UPDATE(Incidents).set({ status: 'CLOSED', resolvedAt: closedAt }).where({ ID: incidentId });
+      await this.auditLogger('Incident', incidentId, 'CLOSE', 'status', oldStatus, 'CLOSED');
+
+      const createdAt = report?.createdAt || incident?.createdAt;
+      let timeSpent = null;
+      if (createdAt) {
+        timeSpent = Math.max(0, Math.round((closedAt - new Date(createdAt)) / 60000));
+        await INSERT.into(IncidentResolveTime).entries({
+          incidentID: { ID: incidentId },
+          incidentType: report?.type || incident?.type || null,
+          timeSpent
+        });
+      }
+    } catch (err) {
+      LOG.error('Failed to close incident', err);
+      return req.reject(500, 'PERSIST_FAILED');
+    }
+
+    LOG.info('Incident closed successfully', { incidentId });
+    return { ID: incidentId, status: 'CLOSED' };
   }
 
   /**

@@ -16,6 +16,14 @@ entity Incident : managed {
   country         : Country; 
 
   assignedTo      : Association to UserReference;
+  resolvedAt      : Timestamp;
+}
+
+entity IncidentResolveTime  {
+  key ID  : UUID;
+  incidentID: Association to Incident;
+  incidentType: IncidentType;
+  timeSpent: Integer;
 }
 
 entity ReportIncident: managed {
@@ -24,6 +32,7 @@ entity ReportIncident: managed {
   description     : String;
   type            : IncidentType;
   customer        : Association to Customer;
+  date            : Date
 }
 entity Customer : managed {
   key ID              : UUID;
