@@ -19,7 +19,44 @@ class IncidentService extends cds.ApplicationService {
     this.before("assignIncident", this.checkAssignIncident);
     this.on("assignIncident", this.assignIncident);
 
-    this.on("reportIncident", this.reportIncident);
+    this.on("ReportIncidentAction", async (req) =>  {
+      const { ReportIncidentEntity } = this.entities;
+      const { incidentID, title, description, type } = req.data || {};
+      const customer = req.data?.customer || req.data?.customer_ID || null;
+
+      // Build entry; for association to Customer use { ID: uuid }
+      const newEntry = {
+        ID: incidentID,
+        title,
+        description,
+        type,
+        customer: customer ? { ID: customer } : null
+      };
+
+      try {
+        await INSERT.into(ReportIncidentEntity).entries(newEntry);
+        await this.auditLogger(
+          'ReportIncident',
+          incidentID,
+          'CREATE',
+          'ALL',
+          '',
+          JSON.stringify(newEntry)
+        );
+      } catch (err) {
+        LOG.error('Failed to create reported incident', err);
+        return req.reject(500, 'PERSIST_FAILED');
+      }
+
+      return {
+        ID: incidentID,
+        title,
+        description,
+        type,
+        customer,
+        message: "Incident reported successfully",
+      };
+    });
 
     this.on("incidentStats", this.incidentStats);
 
@@ -213,24 +250,6 @@ class IncidentService extends cds.ApplicationService {
     });
   }
 
-  async reportIncident(incidentID, title, description, type, customer) {
-    console.log("incidentID:", incidentID);
-    console.log("title:", title);
-    console.log("description:", description);
-    console.log("type:", type);
-    console.log("customer:", customer);
-
-    // Add your incident reporting logic here
-
-    return {
-      ID: incidentID,
-      title,
-      description,
-      type,
-      customer,
-      message: "Incident reported successfully",
-    };
-  }
 
   /**
    * Retrieves statistical information about incidents

@@ -9,3 +9,8 @@ a7b8c9d0-e1f2-3456-1234-567890123456;Suspicious Login Activity;Multiple failed l
 b8c9d0e1-f2a3-4567-2345-678901234567;Email Not Syncing;Outlook email synchronization issues;OPEN;MEDIUM;SOFTWARE;DE;
 c9d0e1f2-a3b4-5678-3456-789012345678;Firewall Configuration;Need firewall rule update for new service;CLOSED;HIGH;NETWORK;US;mike.wilson
 d0e1f2a3-b4c5-6789-4567-890123456789;Data Backup Failed;Nightly backup job failed with errors;IN_PROGRESS;CRITICAL;DATA;FR;sarah.johnson
+11112222-3333-4444-5555-666677778888;Mobile App Freeze;Mobile app freezes when opening profile;OPEN;HIGH;SOFTWARE;US;alice.martin
+22223333-4444-5555-6666-777788889999;Slow API Response;Public API responds very slowly;IN_PROGRESS;CRITICAL;API;DE;dev.ops
+33334444-5555-6666-7777-88889999aaaa;License Key Expired;Customer license expired unexpectedly;OPEN;MEDIUM;BILLING;FR;mark.lee
+44445555-6666-7777-8888-9999aaaabbbb;Broken Link in Portal;Help portal contains broken link;OPEN;LOW;WEB;GB;sam.wilson
+55556666-7777-8888-9999-aaaabbbbcccc;Data Corruption;Imported dataset contains corrupt rows;IN_PROGRESS;CRITICAL;DATA;US;nancy.hill
