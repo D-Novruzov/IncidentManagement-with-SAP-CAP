@@ -1,21 +1,27 @@
-ID;locale;description
-a1b2c3d4-e5f6-7890-abcd-ef1234567890;en;Production server is not responding
-a1b2c3d4-e5f6-7890-abcd-ef1234567890;de;Produktionsserver antwortet nicht
-b2c3d4e5-f6a7-8901-bcde-f12345678901;en;Unable to connect to corporate VPN
-b2c3d4e5-f6a7-8901-bcde-f12345678901;de;Verbindung zum Unternehmens-VPN nicht möglich
-c3d4e5f6-a7b8-9012-cdef-123456789012;en;User forgot password and needs reset
-c3d4e5f6-a7b8-9012-cdef-123456789012;de;Benutzer hat Passwort vergessen und benötigt Zurücksetzung
-d4e5f6a7-b8c9-0123-def1-234567890123;en;Critical queries timing out in production
-d4e5f6a7-b8c9-0123-def1-234567890123;de;Kritische Abfragen laufen in der Produktion ab
-e5f6a7b8-c9d0-1234-ef12-345678901234;en;Office printer showing error messages
-e5f6a7b8-c9d0-1234-ef12-345678901234;de;Bürodrucker zeigt Fehlermeldungen an
-f6a7b8c9-d0e1-2345-f123-456789012345;en;CRM application crashes on startup
-f6a7b8c9-d0e1-2345-f123-456789012345;de;CRM-Anwendung stürzt beim Start ab
-a7b8c9d0-e1f2-3456-1234-567890123456;en;Multiple failed login attempts detected
-a7b8c9d0-e1f2-3456-1234-567890123456;de;Mehrere fehlgeschlagene Anmeldeversuche erkannt
-b8c9d0e1-f2a3-4567-2345-678901234567;en;Outlook email synchronization issues
-b8c9d0e1-f2a3-4567-2345-678901234567;de;Probleme mit der Outlook-E-Mail-Synchronisierung
-c9d0e1f2-a3b4-5678-3456-789012345678;en;Need firewall rule update for new service
-c9d0e1f2-a3b4-5678-3456-789012345678;de;Firewall-Regel-Update für neuen Service erforderlich
-d0e1f2a3-b4c5-6789-4567-890123456789;en;Nightly backup job failed with errors
-d0e1f2a3-b4c5-6789-4567-890123456789;de;Nächtlicher Backup-Job mit Fehlern fehlgeschlagen
+ID_ID;locale;description
+report-1111-2222-3333-444444444444;en;Production server is not responding. All services are down and users cannot access the system.
+report-1111-2222-3333-444444444444;de;Produktionsserver antwortet nicht. Alle Dienste sind ausgefallen und Benutzer können nicht auf das System zugreifen.
+report-2222-3333-4444-555555555555;en;Unable to connect to corporate VPN. Users working remotely are unable to access internal resources.
+report-2222-3333-4444-555555555555;de;Verbindung zum Unternehmens-VPN nicht möglich. Remote arbeitende Benutzer können nicht auf interne Ressourcen zugreifen.
+report-3333-4444-5555-666666666666;en;User forgot password and needs immediate reset to access critical business functions.
+report-3333-4444-5555-666666666666;de;Benutzer hat Passwort vergessen und benötigt sofortige Zurücksetzung für kritische Geschäftsfunktionen.
+report-4444-5555-6666-777777777777;en;Critical database queries timing out in production environment affecting multiple applications.
+report-4444-5555-6666-777777777777;de;Kritische Datenbankabfragen laufen in der Produktionsumgebung ab und betreffen mehrere Anwendungen.
+report-5555-6666-7777-888888888888;en;CRM mobile application crashes immediately on startup for iOS and Android devices.
+report-5555-6666-7777-888888888888;de;CRM-Mobilanwendung stürzt sofort beim Start auf iOS- und Android-Geräten ab.
+report-6666-7777-8888-999999999999;en;REST API endpoints returning 504 timeout errors for high-volume requests.
+report-6666-7777-8888-999999999999;fr;Les points de terminaison de l'API REST renvoient des erreurs de délai d'attente 504 pour les requêtes à volume élevé.
+report-7777-8888-9999-aaaaaaaaaa11;en;Customer data synchronization to cloud storage has failed for the past 24 hours.
+report-7777-8888-9999-aaaaaaaaaa11;fr;La synchronisation des données client vers le stockage cloud a échoué au cours des dernières 24 heures.
+report-8888-9999-aaaa-bbbbbbbbbb22;en;Application email functionality not working. Users cannot send notification emails.
+report-9999-aaaa-bbbb-cccccccccc33;en;Company website showing 503 Service Unavailable error for all users.
+report-9999-aaaa-bbbb-cccccccccc33;fr;Le site Web de l'entreprise affiche une erreur 503 Service indisponible pour tous les utilisateurs.
+report-aaaa-bbbb-cccc-dddddddddd44;en;Multiple users reporting authentication failures when attempting to log into the portal.
+report-aaaa-bbbb-cccc-dddddddddd44;de;Mehrere Benutzer melden Authentifizierungsfehler beim Versuch, sich im Portal anzumelden.
+report-bbbb-cccc-dddd-eeeeeeeeee55;en;API response times have increased from 200ms to over 5 seconds in the past hour.
+report-bbbb-cccc-dddd-eeeeeeeeee55;de;API-Antwortzeiten sind in der letzten Stunde von 200 ms auf über 5 Sekunden gestiegen.
+report-cccc-dddd-eeee-ffffffffff66;en;Data import completed but multiple records show corrupted or missing field values.
+report-dddd-eeee-ffff-gggggggggg77;en;Automated nightly backup job failed with error code DB_BACKUP_TIMEOUT.
+report-eeee-ffff-gggg-hhhhhhhhhh88;en;Payment processing module returning error for all credit card transactions.
+report-ffff-gggg-hhhh-iiiiiiiiii99;en;Monthly financial reports taking over 30 minutes to generate instead of usual 2 minutes.
+report-ffff-gggg-hhhh-iiiiiiiiii99;fr;Les rapports financiers mensuels prennent plus de 30 minutes à générer au lieu des 2 minutes habituelles.

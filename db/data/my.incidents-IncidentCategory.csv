@@ -1,8 +1,11 @@
-code;name;description;isActive
-TECH;Technical Issue;Technical problems and system errors;true
-NETWORK;Network Issue;Network connectivity and infrastructure issues;true
-SECURITY;Security Issue;Security vulnerabilities and threats;true
-ACCESS;Access Issue;Access rights and permission problems;true
-HARDWARE;Hardware Issue;Hardware failures and equipment problems;true
-SOFTWARE;Software Issue;Software bugs and application errors;true
-DATA;Data Issue;Data integrity and database problems;true
+code;description;isActive
+TECH;Technical problems and system errors;true
+NETWORK;Network connectivity and infrastructure issues;true
+SECURITY;Security vulnerabilities and threats;true
+ACCESS;Access rights and permission problems;true
+HARDWARE;Hardware failures and equipment problems;true
+SOFTWARE;Software bugs and application errors;true
+DATA;Data integrity and database problems;true
+API;API integration and service issues;true
+BILLING;Billing and payment issues;true
+WEB;Website and web portal issues;true

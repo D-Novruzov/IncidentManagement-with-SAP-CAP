@@ -20,3 +20,12 @@ SOFTWARE;fr;Problème Logiciel
 DATA;en;Data Issue
 DATA;de;Datenproblem
 DATA;fr;Problème de Données
+API;en;API Issue
+API;de;API-Problem
+API;fr;Problème d'API
+BILLING;en;Billing Issue
+BILLING;de;Abrechnungsproblem
+BILLING;fr;Problème de Facturation
+WEB;en;Web Issue
+WEB;de;Webproblem
+WEB;fr;Problème Web

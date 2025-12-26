@@ -19,7 +19,7 @@ class IncidentService extends cds.ApplicationService {
 
     this.on("closeIncident", async (req) => {
       const { Incidents, ReportIncidentEntity, IncidentResolveTime } = this.entities;
-      const incidentId = req.data.incidentId || req.data?.incidentID;
+      const incidentId = req.data.incidentId;
 
     if (!incidentId) {
       throw cds.error({ code: 400, message: 'incidentId is required' });
@@ -36,28 +36,27 @@ class IncidentService extends cds.ApplicationService {
     const resolvedAt = new Date();
 
     try {
-      await UPDATE(Incidents).set({ status: 'CLOSED', resolvedAt }).where({ ID: incidentId });
+      await UPDATE(Incidents).set({ status: 'CLOSED', resolvedAt }).where({ ID_ID: incidentId });
       console.log(
         'status closed'
       )
       await this.auditLogger('Incident', incidentId, 'CLOSE', 'status', oldStatus, 'CLOSED');
       console.log('audit logged')
 
-      
-      console.log(createdAt)
+      const createdAt = incident.createdAt
           let timeSpent;
           if (createdAt) {
-            timeSpent = Math.max(0, Math.round((closedAt - new Date(createdAt)) / 60000));
+            timeSpent = Math.max(0, Math.round((new Date() - new Date(createdAt)) / 60000));
             console.log('time calculated', timeSpent)
             
             console.log(IncidentResolveTime)
             
               await INSERT.into(IncidentResolveTime).entries({
-                incidentID: { ID: incidentId },
+                ID_ID: incidentId, 
                 incidentType: incident.type,
                 timeSpent
               });
-              console.log(resolveTimeEntity, "insertion happened")
+              
             
               LOG.info('IncidentResolveTime entity not present — skipping time tracking', { incidentId, timeSpent });
           
@@ -74,54 +73,126 @@ class IncidentService extends cds.ApplicationService {
 
     
     this.before("assignIncident", this.checkAssignIncident);
-    this.on("assignIncident", this.assignIncident);
+    this.on("assignIncident", async (req) => {
+      
+    const { Incidents } = this.entities;
+    console.log(req)
+    LOG.info('assignIncident called with data:', req.data);
+    const { incidentID, userId } = req.data || {};
+    LOG.info('Extracted params:', { incidentID, userId });
+
+    const incident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
+    
+    if (!incident) {
+      LOG.error('Incident not found during assignment', { incidentID });
+      throw cds.error({ code: 404, message: 'Incident not found' });
+    }
+
+    const oldAssignee = incident.assignedTo_userId;
+    await UPDATE(Incidents)
+      .set({ assignedTo_userId: userId })
+      .where({ ID_ID: incidentID });
+
+    await this.auditLogger(
+      "Incident",
+      incidentID,
+      "UPDATE",
+      "assignedTo_userId",
+      oldAssignee || "",
+      userId
+    );
+
+    LOG.info("Incident Assigned successfully", {
+      incidentID,
+      assignedTo: userId,
+      entity: "ReportIncidentEntity",
+      caller: req.user?.id,
+    });
+    });
 
 
 
-    // Report Incident Action: create an Incident entry (fields not available remain null)
+    // Report Incident Action: create both ReportIncident and Incident entries
     this.on("ReportIncidentAction", async (req) =>  {
-      const { Incidents } = this.entities;
-      const { incidentID, title, description } = req.data || {};
+      const { Incidents, ReportIncidentEntity } = this.entities;
+      const { incidentID, title, description, type, customer } = req.data || {};
 
       if (!incidentID) {
         throw cds.error({ code: 400, message: 'incidentID is required' });
       }
 
-      
-      const existing = await SELECT.one.from(Incidents).where({ ID: incidentID });
-      if (existing) {
-        return { ID: incidentID, message: 'Incident already exists' };
+      if (!title) {
+        throw cds.error({ code: 400, message: 'title is required' });
       }
 
-      
-      const incidentEntry = {
-        ID: incidentID,
-        title: title || null,
-        description: description || null,
-        status: null,
-        priority: null,
-        category: null,
-        country: null,
-        assignedTo: null,
-        resolvedAt: null
-      };
+      if (!description) {
+        throw cds.error({ code: 400, message: 'description is required' });
+      }
+
+      if (!type) {
+        throw cds.error({ code: 400, message: 'type is required' });
+      }
+
+      // Check if ReportIncident already exists
+      const existingReport = await SELECT.one.from(ReportIncidentEntity).where({ ID: incidentID });
+      if (existingReport) {
+        return { ID: incidentID, message: 'Report Incident already exists' };
+      }
 
       try {
+        // Step 1: Create ReportIncident
+        const reportIncidentEntry = {
+          ID: incidentID,
+          title: title,
+          description: description,
+          type: type,
+          customer: customer ? { ID: customer } : null
+        };
+
+        await INSERT.into(ReportIncidentEntity).entries(reportIncidentEntry);
+        LOG.info('ReportIncident created successfully', { incidentID });
+
+
+        const incidentEntry = {
+          ID_ID: incidentID,  
+          title: title,
+          status: 'OPEN',
+          priority: 'MEDIUM',
+          category: null,
+          country: null,
+          assignedTo: null,
+          resolvedAt: null
+        };
+
         await INSERT.into(Incidents).entries(incidentEntry);
+        LOG.info('Incident created successfully', { incidentID });
+
+        // Verify the Incident was created
+        const verifyIncident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
+        if (!verifyIncident) {
+          LOG.error('Incident creation verification failed', { incidentID });
+          throw new Error('Failed to verify incident creation');
+        }
+        LOG.info('Incident verified in database', { incidentID, incident: verifyIncident });
+
+        // Step 3: Audit log
         await this.auditLogger(
           'Incident',
           incidentID,
           'CREATE',
-          'ALL',
-          '',
-          JSON.stringify(incidentEntry)
+          null,
+          null,
+          null
         );
+
+        return { 
+          ID: incidentID,
+          message: 'Incident Successfully reported'
+        };
       } catch (err) {
         LOG.error('Failed to create incident entry', err);
         throw cds.error({ code: 500, message: 'PERSIST_FAILED' });
       }
-
-      return {message: 'Incident Successfully reported'};
     });
 
     this.on("incidentStats", this.incidentStats);
@@ -195,7 +266,7 @@ class IncidentService extends cds.ApplicationService {
 
     if (!incidentId) throw cds.error({ code: 400, message: 'incidentId is required' });
 
-    const incident = await SELECT.one.from(Incidents).where({ ID: incidentId });
+    const incident = await SELECT.one.from(Incidents).where({ ID_ID: incidentId });
     if (!incident) throw cds.error({ code: 404, message: 'Incident not found' });
 
     if (incident.status === 'CLOSED') throw cds.error({ code: 400, message: 'Incident is already closed' });
@@ -218,7 +289,7 @@ class IncidentService extends cds.ApplicationService {
      if (!incidentID) throw cds.error({ code: 400, message: 'incidentID is required' });
      if (!userId) throw cds.error({ code: 400, message: 'userId is required' });
 
-     const incident = await SELECT.one.from(Incidents).where({ ID: incidentID });
+     const incident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
      const user = await SELECT.one.from(UserReference).where({ userId: userId });
 
      if (!incident) throw cds.error({ code: 404, message: 'Invalid incident id' });
@@ -246,34 +317,7 @@ class IncidentService extends cds.ApplicationService {
    * @param {string} req.data.userId - ID of the user to assign the incident to
    * @returns {Promise<void>}
    */
-  async assignIncident(req) {
-    const { Incidents } = this.entities;
 
-    const { incidentID, userId } = req.data || {};
-
-    const incident = await SELECT.one.from(Incidents).where({ ID: incidentID });
-
-    const oldAssignee = incident.assignedTo_userId;
-    await UPDATE(Incident)
-      .set({ assignedTo_userId: userId })
-      .where({ ID: incidentID });
-
-    await this.auditLogger(
-      "Incident",
-      incidentID,
-      "UPDATE",
-      "assignedTo_userId",
-      oldAssignee || "",
-      userId
-    );
-
-    LOG.info("Incident Assigned successfully", {
-      incidentID,
-      assignedTo: userId,
-      entity: "ReportIncidentEntity",
-      caller: req.user?.id,
-    });
-  }
 
 
   /**

@@ -1,16 +1,16 @@
-ID;title;description;status;priority;category_code;country_code;assignedTo_userId
-a1b2c3d4-e5f6-7890-abcd-ef1234567890;Server Downtime;Production server is not responding;OPEN;CRITICAL;TECH;US;john.doe
-b2c3d4e5-f6a7-8901-bcde-f12345678901;VPN Connection Failed;Unable to connect to corporate VPN;IN_PROGRESS;HIGH;NETWORK;GB;jane.smith
-c3d4e5f6-a7b8-9012-cdef-123456789012;Password Reset Request;User forgot password and needs reset;CLOSED;LOW;ACCESS;DE;mike.wilson
-d4e5f6a7-b8c9-0123-def1-234567890123;Database Query Timeout;Critical queries timing out in production;IN_PROGRESS;CRITICAL;DATA;US;sarah.johnson
-e5f6a7b8-c9d0-1234-ef12-345678901234;Printer Not Working;Office printer showing error messages;OPEN;MEDIUM;HARDWARE;FR;david.brown
-f6a7b8c9-d0e1-2345-f123-456789012345;Application Crash;CRM application crashes on startup;IN_PROGRESS;HIGH;SOFTWARE;US;john.doe
-a7b8c9d0-e1f2-3456-1234-567890123456;Suspicious Login Activity;Multiple failed login attempts detected;OPEN;CRITICAL;SECURITY;GB;jane.smith
-b8c9d0e1-f2a3-4567-2345-678901234567;Email Not Syncing;Outlook email synchronization issues;OPEN;MEDIUM;SOFTWARE;DE;
-c9d0e1f2-a3b4-5678-3456-789012345678;Firewall Configuration;Need firewall rule update for new service;CLOSED;HIGH;NETWORK;US;mike.wilson
-d0e1f2a3-b4c5-6789-4567-890123456789;Data Backup Failed;Nightly backup job failed with errors;IN_PROGRESS;CRITICAL;DATA;FR;sarah.johnson
-11112222-3333-4444-5555-666677778888;Mobile App Freeze;Mobile app freezes when opening profile;OPEN;HIGH;SOFTWARE;US;alice.martin
-22223333-4444-5555-6666-777788889999;Slow API Response;Public API responds very slowly;IN_PROGRESS;CRITICAL;API;DE;dev.ops
-33334444-5555-6666-7777-88889999aaaa;License Key Expired;Customer license expired unexpectedly;OPEN;MEDIUM;BILLING;FR;mark.lee
-44445555-6666-7777-8888-9999aaaabbbb;Broken Link in Portal;Help portal contains broken link;OPEN;LOW;WEB;GB;sam.wilson
-55556666-7777-8888-9999-aaaabbbbcccc;Data Corruption;Imported dataset contains corrupt rows;IN_PROGRESS;CRITICAL;DATA;US;nancy.hill
+ID_ID;title;status;priority;category_code;country_code;assignedTo_userId;resolvedAt;createdAt;createdBy;modifiedAt;modifiedBy
+report-1111-2222-3333-444444444444;Server Down - Production;CLOSED;CRITICAL;TECH;US;john.doe;2024-12-01;2024-12-01T08:30:00Z;system;2024-12-01T18:00:00Z;system
+report-2222-3333-4444-555555555555;VPN Connection Issue;IN_PROGRESS;HIGH;NETWORK;US;jane.smith;;2024-12-05T10:15:00Z;system;2024-12-05T14:00:00Z;system
+report-3333-4444-5555-666666666666;Password Reset Request;CLOSED;LOW;ACCESS;DE;mike.wilson;2024-12-08;2024-12-08T14:20:00Z;system;2024-12-08T15:30:00Z;system
+report-4444-5555-6666-777777777777;Database Performance Issues;IN_PROGRESS;CRITICAL;DATA;US;sarah.johnson;;2024-12-10T09:45:00Z;system;2024-12-10T16:00:00Z;system
+report-5555-6666-7777-888888888888;Mobile App Crash;IN_PROGRESS;HIGH;SOFTWARE;GB;john.doe;;2024-12-12T11:30:00Z;system;2024-12-12T13:00:00Z;system
+report-6666-7777-8888-999999999999;API Timeout Errors;OPEN;CRITICAL;DATA;US;sarah.johnson;;2024-12-15T13:00:00Z;system;2024-12-15T13:00:00Z;system
+report-7777-8888-9999-aaaaaaaaaa11;Data Sync Failure;IN_PROGRESS;HIGH;DATA;FR;sarah.johnson;;2024-12-17T15:20:00Z;system;2024-12-17T17:00:00Z;system
+report-8888-9999-aaaa-bbbbbbbbbb22;Email Sending Failed;OPEN;MEDIUM;SOFTWARE;US;;;2024-12-18T16:45:00Z;system;2024-12-18T16:45:00Z;system
+report-9999-aaaa-bbbb-cccccccccc33;Website Outage;CLOSED;CRITICAL;TECH;FR;jane.smith;2024-12-20;2024-12-20T07:30:00Z;system;2024-12-20T09:00:00Z;system
+report-aaaa-bbbb-cccc-dddddddddd44;Login Authentication Failure;IN_PROGRESS;HIGH;ACCESS;GB;mike.wilson;;2024-12-21T10:00:00Z;system;2024-12-21T12:00:00Z;system
+report-bbbb-cccc-dddd-eeeeeeeeee55;API Performance Degradation;OPEN;CRITICAL;DATA;DE;sarah.johnson;;2024-12-22T12:15:00Z;system;2024-12-22T12:15:00Z;system
+report-cccc-dddd-eeee-ffffffffff66;Data Corruption Detected;IN_PROGRESS;CRITICAL;DATA;US;david.brown;;2024-12-23T14:30:00Z;system;2024-12-23T16:00:00Z;system
+report-dddd-eeee-ffff-gggggggggg77;Backup Job Failure;OPEN;HIGH;TECH;GB;;;2024-12-24T08:00:00Z;system;2024-12-24T08:00:00Z;system
+report-eeee-ffff-gggg-hhhhhhhhhh88;Payment Processing Error;OPEN;HIGH;SOFTWARE;US;;;2024-12-25T09:30:00Z;system;2024-12-25T09:30:00Z;system
+report-ffff-gggg-hhhh-iiiiiiiiii99;Report Generation Slow;OPEN;MEDIUM;SOFTWARE;FR;;;2024-12-26T11:00:00Z;system;2024-12-26T11:00:00Z;system
