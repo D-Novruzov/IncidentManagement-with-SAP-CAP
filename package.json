@@ -16,7 +16,16 @@
     "start": "cds-serve"
   },
   "cds": {
+    "features": {
+      "in_memory_db": true
+    },
     "requires": {
+       "db": {
+        "kind": "sqlite",
+        "credentials": {
+          "url": ":memory:"
+        }
+      },
       "auth": {
         "kind": "mocked",
         "users": {

@@ -173,8 +173,8 @@ class IncidentService extends cds.ApplicationService {
           throw new Error('Failed to verify incident creation');
         }
         LOG.info('Incident verified in database', { incidentID, incident: verifyIncident });
-
-
+        
+    
         await this.auditLogger(
           "Incident",
           incidentID,
@@ -401,7 +401,7 @@ class IncidentService extends cds.ApplicationService {
 UpdateSlaStatus(incident) {
   const currentTime = Date.now();
   const timeRemaining = incident.slaDueDate - currentTime;
-  const totalDuration = incident.slaDuration * 60 * 60 * 1000; // hours to milliseconds
+  const totalDuration = incident.slaDuration * 60 * 60 * 1000; 
   
   if (timeRemaining <= 0) {
     return "BREACHED";
