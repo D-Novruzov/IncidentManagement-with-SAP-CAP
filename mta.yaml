@@ -48,7 +48,7 @@ resources:
         xsappname: incident-managment-${org}-${space}
         tenant-mode: dedicated
         role-collections:
-          - name: 'admin (incident-managment ${org}-${space})'
-            description: 'generated'
+          - name: "admin (incident-managment ${org}-${space})"
+            description: "generated"
             role-template-references:
-              - '$XSAPPNAME.admin'
+              - "$XSAPPNAME.admin"
