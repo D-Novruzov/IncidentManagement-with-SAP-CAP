@@ -22,7 +22,7 @@ entity Incident : managed {
       slaDuration: Integer;
       slaStartTime : Integer;
       slaDueDate : Integer;
-      slaStatusL: String;
+      slaStatus: SlaStatus;
       slaBreachedAt: Timestamp;
       resolvedAt  : Date
 }
@@ -104,3 +104,9 @@ type Action       : String enum {
   UPDATE;
   CLOSE
 };
+type SlaStatus : String enum {
+  MET;
+  ATRISK;
+  BREACHED;
+  ONTRACK;
+}

@@ -2,13 +2,15 @@
 const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
-const PRIORITY_BY_TYPE = require('./config/sla-config')
-const SLA_DURATION_HOURS = require('./config/sla-config')
+const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require('./config/sla-config');
 /**
  * IncidentService - Handles all incident management operations
  * Provides functionality for creating, updating, assigning, and closing incidents
  * with comprehensive audit logging capabilities
  */
+console.log('PRIORITY_BY_TYPE:', PRIORITY_BY_TYPE);
+console.log('SLA_DURATION_HOURS:', SLA_DURATION_HOURS);
+console.log('Type of PRIORITY_BY_TYPE:', typeof PRIORITY_BY_TYPE);
 class IncidentService extends cds.ApplicationService {
   /**
    * Initializes the Incident Service and registers all event handlers
@@ -48,7 +50,7 @@ class IncidentService extends cds.ApplicationService {
             timeSpent = Math.max(0, Math.round((new Date() - new Date(createdAt)) / 60000));
             
               await INSERT.into(IncidentResolveTime).entries({
-                ID_ID: incidentId, 
+                incidentID_ID: incidentId, 
                 incidentType: incident.type,
                 timeSpent
               });
@@ -133,10 +135,11 @@ class IncidentService extends cds.ApplicationService {
           title: title,
           description: description,
           type: type,
-          customer: customer ? { ID: customer } : null,
+          customer_ID: customer || null,
         };
 
         await INSERT.into(ReportIncidentEntity).entries(reportIncidentEntry);
+        
         LOG.info('ReportIncident created successfully', { incidentID });
 
 
@@ -145,20 +148,24 @@ class IncidentService extends cds.ApplicationService {
           title: title,
           status: "OPEN",
           priority: PRIORITY_BY_TYPE[type],
-          category: null,
-          country: null,
-          assignedTo: null,
+          category: null,        
+          country: null,         
+          assignedTo: null, 
           resolvedAt: null,
           slaDuration  : SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]],
-          slaStartTime : new Date(),
-          slaDueDate   : new Date(Date.now() + (SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]] * 60 * 60 * 1000)),
+          slaStartTime : Date.now(),
+          slaDueDate   : Date.now() + (SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]] * 60 * 60 * 1000),
           slaStatus   : "ONTRACK",
-          slaBreachedAt: Timestamp,
-          resolvedAt   : Date
+          slaBreachedAt: null,
+          resolvedAt   : null
         };
-
+        console.log(incidentEntry.priority)
+        console.log(SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]])
         await INSERT.into(Incidents).entries(incidentEntry);
+        
+
         LOG.info('Incident created successfully', { incidentEntry });
+
 
         const verifyIncident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
         if (!verifyIncident) {
@@ -255,7 +262,7 @@ class IncidentService extends cds.ApplicationService {
   async checkIncident(req) {
     const { Incidents } = this.entities;
     const incidentId = req.data?.incidentId || req.data?.incidentID;
-
+    
     if (!incidentId)
       throw cds.error({ code: 400, message: "incidentId is required" });
 
@@ -361,7 +368,7 @@ class IncidentService extends cds.ApplicationService {
   async setSLAProperties() {
     cds.spawn({ tenant: 'anonymous' }, async (tx) => {
       const { Incidents } = tx.entities;
-    
+      const now = Date.now()
       const openIncidents = await tx.run(
         SELECT.from(Incidents).where({
           status: { '!=': 'CLOSED' }
@@ -369,12 +376,12 @@ class IncidentService extends cds.ApplicationService {
       );
     
       for (const incident of openIncidents) {
-        const newStatus = calculateSLAStatus(incident);
+        const newStatus = this.UpdateSlaStatus(incident);
         
         if (newStatus !== incident.slaStatus) {
           await tx.run(
             UPDATE(Incidents).set({
-              status :  newStatus
+              slaStatus :  newStatus
             }).where({ID_ID: incident.ID_ID})
           )
           LOG.info('Incident SLA Status Updated Successfully');
@@ -391,14 +398,19 @@ class IncidentService extends cds.ApplicationService {
     });
   
   }
-  UpdateSlaStatus(incident) {
-    const timeRemaining = incident.slaDueDate - new Date();
-    const currentTime = new Date().now()
-    if (currentTime > timeRemaining) return "BREACHED"
-    else if (currentTime < duration * 0.25) return "ATRISK"
-    else return "ONTRACK"
-     
+UpdateSlaStatus(incident) {
+  const currentTime = Date.now();
+  const timeRemaining = incident.slaDueDate - currentTime;
+  const totalDuration = incident.slaDuration * 60 * 60 * 1000; // hours to milliseconds
+  
+  if (timeRemaining <= 0) {
+    return "BREACHED";
+  } else if (timeRemaining < totalDuration * 0.25) {
+    return "ATRISK";
+  } else {
+    return "ONTRACK";
   }
+}
 }
 
 module.exports = IncidentService;
