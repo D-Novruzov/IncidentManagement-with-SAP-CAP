@@ -195,6 +195,10 @@ class IncidentService extends cds.ApplicationService {
     });
 
     this.on("incidentStats", this.incidentStats);
+    this.on('avgByCategory', this.avgResolutionTimeByType)
+
+
+
 
     this.on("runScheduledJob", async (req) => {
       return this.runScheduledJob(req);
@@ -411,6 +415,13 @@ UpdateSlaStatus(incident) {
     return "ONTRACK";
   }
 }
-}
 
+ async avgResolutionTimeByType() {
+  const {IncidentResolveTime} = this.entities
+
+  const avgTimes = await SELECT.from(IncidentResolveTime).columns('incidentType', {func : 'count', as : 'count'}, { func: 'avg', args: [{ ref: ['timeSpent'] }], as: 'avgTime' }).groupBy('incidentType')
+  LOG.info('Successfully retrieved the Average Times By Type')
+  return avgTimes;
+}
+}
 module.exports = IncidentService;

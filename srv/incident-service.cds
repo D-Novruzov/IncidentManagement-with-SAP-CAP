@@ -53,4 +53,11 @@ service IncidentService {
     closedIncidents : Integer;
     isConsistent    : Boolean;
   };
+
+  function avgResolutionTimeByType() returns  array of {
+    incidentType: my.IncidentType;
+    count: Integer;
+    avgTime: Integer;
+  }
+  
 }
