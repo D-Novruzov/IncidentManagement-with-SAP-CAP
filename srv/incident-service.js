@@ -25,7 +25,7 @@ class IncidentService extends cds.ApplicationService {
         throw cds.error({ code: 400, message: "incidentId is required" });
       }
 
-      // load incident and optional report record
+      
       const incident = await SELECT.one
         .from(ReportIncidentEntity)
         .where({ ID: incidentId });
@@ -38,19 +38,12 @@ class IncidentService extends cds.ApplicationService {
 
     try {
       await UPDATE(Incidents).set({ status: 'CLOSED', resolvedAt }).where({ ID_ID: incidentId });
-      console.log(
-        'status closed'
-      )
       await this.auditLogger('Incident', incidentId, 'CLOSE', 'status', oldStatus, 'CLOSED');
-      console.log('audit logged')
 
       const createdAt = incident.createdAt
           let timeSpent;
           if (createdAt) {
             timeSpent = Math.max(0, Math.round((new Date() - new Date(createdAt)) / 60000));
-            console.log('time calculated', timeSpent)
-            
-            console.log(IncidentResolveTime)
             
               await INSERT.into(IncidentResolveTime).entries({
                 ID_ID: incidentId, 
@@ -58,10 +51,7 @@ class IncidentService extends cds.ApplicationService {
                 timeSpent
               });
               
-            
               LOG.info('IncidentResolveTime entity not present — skipping time tracking', { incidentId, timeSpent });
-          
-            console.log('time track happen');
       }
     } catch (err) {
       LOG.error('Failed to close incident', err);
@@ -74,9 +64,7 @@ class IncidentService extends cds.ApplicationService {
 
     this.before("assignIncident", this.checkAssignIncident);
     this.on("assignIncident", async (req) => {
-      
     const { Incidents } = this.entities;
-    console.log(req)
     LOG.info('assignIncident called with data:', req.data);
     const { incidentID, userId } = req.data || {};
     LOG.info('Extracted params:', { incidentID, userId });
@@ -164,7 +152,6 @@ class IncidentService extends cds.ApplicationService {
         await INSERT.into(Incidents).entries(incidentEntry);
         LOG.info('Incident created successfully', { incidentID });
 
-        // Verify the Incident was created
         const verifyIncident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
         if (!verifyIncident) {
           LOG.error('Incident creation verification failed', { incidentID });
@@ -172,7 +159,7 @@ class IncidentService extends cds.ApplicationService {
         }
         LOG.info('Incident verified in database', { incidentID, incident: verifyIncident });
 
-        // Step 3: Audit log
+
         await this.auditLogger(
           "Incident",
           incidentID,
@@ -307,28 +294,6 @@ class IncidentService extends cds.ApplicationService {
         message: "Incident is already assigned to user",
       });
   }
-
-  /**
-   * Closes an incident by updating its status to CLOSED
-   * Creates an audit log entry to track the status change
-   * @param {object} req - Request object containing incidentId
-   * @returns {Promise<object>} Object containing closed incident ID and new status
-   * @example
-   * // Returns: { ID: "abc-123", status: "CLOSED" }
-   */
-  // async closeIncident(req) {;
-  // }
-
-  /**
-   * Assigns an incident to a specific user
-   * Updates the assignedTo_userId field and creates an audit log entry
-   * @param {object} req - Request object containing incidentID and userId
-   * @param {string} req.data.incidentID - UUID of the incident to assign
-   * @param {string} req.data.userId - ID of the user to assign the incident to
-   * @returns {Promise<void>}
-   */
-
-
 
   /**
    * Retrieves statistical information about incidents
