@@ -10,17 +10,19 @@ service IncidentService {
 
   @requires: 'admin'
   entity IncidentResolveTime  as projection on my.IncidentResolveTime;
+  annotate IncidentResolveTime with @(requires: 'admin');
 
 
-  @readonly
   entity Category             as projection on my.IncidentCategory;
-
-  @requires: 'admin'
+  annotate Category with @readonly;
+  
+  
   entity UserReference        as projection on my.UserReference;
-
-  @requires: 'admin'
+  annotate UserReference with @(requires: 'admin');
+ 
   entity Customer             as projection on my.Customer;
-
+  annotate Customer with @(requires: 'admin');
+  
 
   entity AuditLog             as projection on my.AuditLog;
 
