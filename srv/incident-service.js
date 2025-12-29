@@ -1,7 +1,9 @@
-const cds = require("@sap/cds");
 
+const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
+const PRIORITY_BY_TYPE = require('./config/sla-config')
+const SLA_DURATION_HOURS = require('./config/sla-config')
 /**
  * IncidentService - Handles all incident management operations
  * Provides functionality for creating, updating, assigning, and closing incidents
@@ -142,15 +144,21 @@ class IncidentService extends cds.ApplicationService {
           ID_ID: incidentID,
           title: title,
           status: "OPEN",
-          priority: "MEDIUM",
+          priority: PRIORITY_BY_TYPE[type],
           category: null,
           country: null,
           assignedTo: null,
           resolvedAt: null,
+          slaDuration  : SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]],
+          slaStartTime : new Date(),
+          slaDueDate   : new Date(Date.now() + (SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]] * 60 * 60 * 1000)),
+          slaStatus   : "ONTRACK",
+          slaBreachedAt: Timestamp,
+          resolvedAt   : Date
         };
 
         await INSERT.into(Incidents).entries(incidentEntry);
-        LOG.info('Incident created successfully', { incidentID });
+        LOG.info('Incident created successfully', { incidentEntry });
 
         const verifyIncident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
         if (!verifyIncident) {
@@ -193,6 +201,7 @@ class IncidentService extends cds.ApplicationService {
     cds.spawn(async () => {
       try {
         const deletedCount = await this.cleanupClosedIncidents();
+        await this.setSLAProperties()
         LOG.info("Scheduled job finished", { deletedCount });
       } catch (err) {
         LOG.error("Scheduled job failed", err);
@@ -346,6 +355,49 @@ class IncidentService extends cds.ApplicationService {
     });
 
     return deletedCount;
+  }
+
+
+  async setSLAProperties() {
+    cds.spawn({ tenant: 'anonymous' }, async (tx) => {
+      const { Incidents } = tx.entities;
+    
+      const openIncidents = await tx.run(
+        SELECT.from(Incidents).where({
+          status: { '!=': 'CLOSED' }
+        })
+      );
+    
+      for (const incident of openIncidents) {
+        const newStatus = calculateSLAStatus(incident);
+        
+        if (newStatus !== incident.slaStatus) {
+          await tx.run(
+            UPDATE(Incidents).set({
+              status :  newStatus
+            }).where({ID_ID: incident.ID_ID})
+          )
+          LOG.info('Incident SLA Status Updated Successfully');
+        }
+        
+        if (newStatus === "BREACHED" && !incident.slaBreachedAt) {
+          await tx.run(
+            UPDATE(Incidents)
+              .set({ slaBreachedAt: now })
+              .where({ ID_ID: incident.ID_ID })
+          );
+        }
+      }
+    });
+  
+  }
+  UpdateSlaStatus(incident) {
+    const timeRemaining = incident.slaDueDate - new Date();
+    const currentTime = new Date().now()
+    if (currentTime > timeRemaining) return "BREACHED"
+    else if (currentTime < duration * 0.25) return "ATRISK"
+    else return "ONTRACK"
+     
   }
 }
 

@@ -19,6 +19,11 @@ entity Incident : managed {
       country     : Country;
 
       assignedTo  : Association to UserReference;
+      slaDuration: Integer;
+      slaStartTime : Integer;
+      slaDueDate : Integer;
+      slaStatusL: String;
+      slaBreachedAt: Timestamp;
       resolvedAt  : Date
 }
 
