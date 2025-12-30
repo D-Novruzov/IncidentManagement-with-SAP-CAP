@@ -1,6 +1,6 @@
 using my.incidents as my from '../db/schema';
 
-service IncidentService {
+service IncidentService @(path:'/incidents') {
   @odata.draft.enabled
   entity Incidents            as projection on my.Incident;
 
@@ -34,8 +34,8 @@ service IncidentService {
     status : String
   };
 
+  action   assignIncident(incidentID: UUID, userId: String);
   action   reassignIncident(incidentID: UUID, userId: String);
-  action   reassingIncident(incidentID: UUID, userId: String);
 
   action   ReportIncidentAction(incidentID: UUID, title: String, description: String, type: my.IncidentType, customer: UUID) returns {
     ID          : UUID;

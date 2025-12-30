@@ -135,7 +135,7 @@ class IncidentService extends cds.ApplicationService {
           req.data.incidentID,
           "UPDATE",
           "assignedTo_userId",
-          oldAssignee || '',
+          oldAssignee || "",
           req.data.userId
         );
       } catch (err) {
@@ -353,11 +353,13 @@ class IncidentService extends cds.ApplicationService {
     if (incident.status === "CLOSED")
       throw cds.error({ code: 400, message: "Incident is already closed" });
     if (!user) throw cds.error({ code: 404, message: "Invalid user id" });
-    if (incident.assignedTo_userId)
-      throw cds.error({
-        code: 403,
-        message: "Incident is already assigned to user",
-      });
+    if (req.event != "reassignIncident") {
+      if (incident.assignedTo_userId)
+        throw cds.error({
+          code: 403,
+          message: "Incident is already assigned to user",
+        });
+    }
   }
 
   /**
