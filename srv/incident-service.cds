@@ -34,8 +34,8 @@ service IncidentService {
     status : String
   };
 
-  action   assignIncident(incidentID: UUID, userId: String);
-
+  action   reassignIncident(incidentID: UUID, userId: String);
+  action   reassingIncident(incidentID: UUID, userId: String);
 
   action   ReportIncidentAction(incidentID: UUID, title: String, description: String, type: my.IncidentType, customer: UUID) returns {
     ID          : UUID;
