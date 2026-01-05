@@ -21,7 +21,8 @@ modules:
       builder: npm-ci
     provides:
       - name: srv-api
-        srv-url: ${default-url}
+        properties:
+          srv-url: ${default-url}
     requires:
       - name: app-logs
       - name: incident-job-scheduler
@@ -51,13 +52,13 @@ resources:
   - name: app-logs
     type: org.cloudfoundry.managed-service
     parameters:
-      service: application-logging
+      service: application-logs
       service-plan: lite
   - name: incident-job-scheduler
     type: org.cloudfoundry.managed-service
     parameters:
       service: jobscheduler
-      service-plan: standard
+      service-plan: lite
   - name: incident-managment-auth
     type: org.cloudfoundry.managed-service
     parameters:

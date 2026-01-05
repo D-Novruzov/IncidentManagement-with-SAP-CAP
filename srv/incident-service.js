@@ -1,13 +1,17 @@
+
 const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
-const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require("./config/sla-config");
+const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require('./config/sla-config');
+const { message } = require("@sap/cds/lib/log/cds-error");
 /**
  * IncidentService - Handles all incident management operations
  * Provides functionality for creating, updating, assigning, and closing incidents
  * with comprehensive audit logging capabilities
  */
-
+console.log('PRIORITY_BY_TYPE:', PRIORITY_BY_TYPE);
+console.log('SLA_DURATION_HOURS:', SLA_DURATION_HOURS);
+console.log('Type of PRIORITY_BY_TYPE:', typeof PRIORITY_BY_TYPE);
 class IncidentService extends cds.ApplicationService {
   /**
    * Initializes the Incident Service and registers all event handlers
@@ -17,238 +21,149 @@ class IncidentService extends cds.ApplicationService {
   async init() {
     this.before("closeIncident", this.checkIncident);
 
-    this.on("closeIncident", async (req) => {
-      const { Incidents, ReportIncidentEntity, IncidentResolveTime } =
-        this.entities;
-      const incidentId = req.data.incidentId;
-
-      if (!incidentId) {
-        throw cds.error({ code: 400, message: "incidentId is required" });
-      }
-
-      const incident = await SELECT.one
-        .from(ReportIncidentEntity)
-        .where({ ID: incidentId });
-      if (!incident) {
-        throw cds.error({ code: 404, message: "Incident not found" });
-      }
-
-      const oldStatus = incident.status;
-      const resolvedAt = new Date();
-
-      try {
-        await UPDATE(Incidents)
-          .set({ status: "CLOSED", resolvedAt })
-          .where({ ID_ID: incidentId });
-        await this.auditLogger(
-          "Incident",
-          incidentId,
-          "CLOSE",
-          "status",
-          oldStatus,
-          "CLOSED"
-        );
-
-        const createdAt = incident.createdAt;
-        let timeSpent;
-        if (createdAt) {
-          timeSpent = Math.max(
-            0,
-            Math.round((new Date() - new Date(createdAt)) / 60000)
-          );
-
-          await INSERT.into(IncidentResolveTime).entries({
-            incidentID_ID: incidentId,
-            incidentType: incident.type,
-            timeSpent,
-          });
-
-          LOG.info(
-            "IncidentResolveTime entity not present — skipping time tracking",
-            { incidentId, timeSpent }
-          );
-        }
-      } catch (err) {
-        LOG.error("Failed to close incident", err);
-        throw cds.error({ code: 500, message: "PERSIST_FAILED" });
-      }
-
-      LOG.info("Incident closed successfully", { incidentId });
-      return { ID: incidentId, status: "CLOSED" };
-    });
-
+    this.on("closeIncident", this._closeIncident);
+    this.on('reopenIncident', this._reopenIncident);
     this.before("assignIncident", this.checkAssignIncident);
-    this.before("reassignIncident", this.checkAssignIncident);
+    this.on("assignIncident", this._assignIncident);
+    this.on("ReportIncidentAction", this._reportIncidentAction);
+    this.on("incidentStats", this._incidentStats);
+    this.on("runScheduledJob", this._runScheduledJob);
+    return super.init();
+  }
 
-    this.on("assignIncident", async (req) => {
-      const { Incidents } = this.entities;
-      LOG.info("assignIncident called with data:", req.data);
-      const { incidentID, userId } = req.data || {};
-      LOG.info("Extracted params:", { incidentID, userId });
+  async _assignIncident(req) {
+    const { Incidents } = this.entities;
+    LOG.info('assignIncident called with data:', req.data);
+    const { incidentID, userId } = req.data || {};
+    LOG.info('Extracted params:', { incidentID, userId });
 
-      const incident = await SELECT.one
-        .from(Incidents)
-        .where({ ID_ID: incidentID });
+    const incident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
+    
+    if (!incident) {
+      LOG.error('Incident not found during assignment', { incidentID });
+      throw cds.error({ code: 404, message: 'Incident not found' });
+    }
 
-      if (!incident) {
-        LOG.error("Incident not found during assignment", { incidentID });
-        throw cds.error({ code: 404, message: "Incident not found" });
+    const oldAssignee = incident.assignedTo_userId;
+    await UPDATE(Incidents)
+      .set({ assignedTo_userId: userId })
+      .where({ ID_ID: incidentID });
+
+    await this.auditLogger(
+      "Incident",
+      incidentID,
+      "UPDATE",
+      "assignedTo_userId",
+      oldAssignee || "",
+      userId
+    );
+
+    LOG.info("Incident Assigned successfully", {
+      incidentID,
+      assignedTo: userId,
+      entity: "ReportIncidentEntity",
+      caller: req.user?.id,
+    });
+  }
+
+  async _reportIncidentAction(req) {
+    const { Incidents, ReportIncidentEntity } = this.entities;
+    const { incidentID, title, description, type, customer } = req.data || {};
+
+    if (!incidentID) {
+      throw cds.error({ code: 400, message: "incidentID is required" });
+    }
+
+    if (!title) {
+      throw cds.error({ code: 400, message: "title is required" });
+    }
+
+    if (!description) {
+      throw cds.error({ code: 400, message: "description is required" });
+    }
+
+    if (!type) {
+      throw cds.error({ code: 400, message: "type is required" });
+    }
+
+    const existingReport = await SELECT.one
+      .from(ReportIncidentEntity)
+      .where({ ID: incidentID });
+    if (existingReport) {
+      return { ID: incidentID, message: "Report Incident already exists" };
+    }
+
+    try {
+      const reportIncidentEntry = {
+        ID: incidentID,
+        title: title,
+        description: description,
+        type: type,
+        customer_ID: customer || null,
+      };
+
+      await INSERT.into(ReportIncidentEntity).entries(reportIncidentEntry);
+      
+      LOG.info('ReportIncident created successfully', { incidentID });
+
+
+      const incidentEntry = {
+        ID_ID: incidentID,
+        title: title,
+        status: "OPEN",
+        priority: PRIORITY_BY_TYPE[type],
+        category: null,        
+        country: null,         
+        assignedTo: null, 
+        resolvedAt: null,
+        slaDuration  : SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]],
+        slaStartTime : Date.now(),
+        slaDueDate   : Date.now() + (SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]] * 60 * 60 * 1000),
+        slaStatus   : "ONTRACK",
+        slaBreachedAt: null,
+        resolvedAt   : null
+      };
+      console.log(incidentEntry.priority)
+      console.log(SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]])
+      await INSERT.into(Incidents).entries(incidentEntry);
+      
+
+      LOG.info('Incident created successfully', { incidentEntry });
+
+
+      const verifyIncident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
+      if (!verifyIncident) {
+        LOG.error('Incident creation verification failed', { incidentID });
+        throw new Error('Failed to verify incident creation');
       }
-
-      const oldAssignee = incident.assignedTo_userId;
-      await UPDATE(Incidents)
-        .set({ assignedTo_userId: userId })
-        .where({ ID_ID: incidentID });
-
+      LOG.info('Incident verified in database', { incidentID, incident: verifyIncident });
+      
+  
       await this.auditLogger(
         "Incident",
         incidentID,
-        "UPDATE",
-        "assignedTo_userId",
-        oldAssignee || "",
-        userId
+        "CREATE",
+        null,
+        null,
+        null
       );
 
-      LOG.info("Incident Assigned successfully", {
-        incidentID,
-        assignedTo: userId,
-        entity: "ReportIncidentEntity",
-        caller: req.user?.id,
-      });
-    });
-    this.on("reassignIncident", async (req) => {
-      LOG.info("This is the new Assignee Id;", req.data.userId);
+      return { 
+        ID: incidentID,
+        message: 'Incident Successfully reported'
+      };
+    } catch (err) {
+      LOG.error("Failed to create incident entry", err);
+      throw cds.error({ code: 500, message: "PERSIST_FAILED" });
+    }
+  }
 
-      const { Incidents } = this.entities;
-      try {
-        const oldAssignee = await SELECT.from(Incidents).where({
-          ID_ID: req.data.incidentID,
-        });
-        const newAssignee = await UPDATE(Incidents)
-          .set({ assignedTo_userId: req.data.userId })
-          .where({ ID_ID: req.data.incidentID });
+  async _incidentStats(req) {
+    return this.incidentStats(req);
+  }
 
-        LOG.info("Incident was successfully reassigned: ", newAssignee);
-
-        await this.auditLogger(
-          Incidents,
-          req.data.incidentID,
-          "UPDATE",
-          "assignedTo_userId",
-          oldAssignee || "",
-          req.data.userId
-        );
-      } catch (err) {
-        LOG.error("Incident reassignment failed");
-        throw cds.error({
-          code: 500,
-          message: "Incident could not be reassigned",
-        });
-      }
-    });
-
-    this.on("ReportIncidentAction", async (req) => {
-      const { Incidents, ReportIncidentEntity } = this.entities;
-      const { incidentID, title, description, type, customer } = req.data || {};
-
-      if (!incidentID) {
-        throw cds.error({ code: 400, message: "incidentID is required" });
-      }
-
-      if (!title) {
-        throw cds.error({ code: 400, message: "title is required" });
-      }
-
-      if (!description) {
-        throw cds.error({ code: 400, message: "description is required" });
-      }
-
-      if (!type) {
-        throw cds.error({ code: 400, message: "type is required" });
-      }
-
-      const existingReport = await SELECT.one
-        .from(ReportIncidentEntity)
-        .where({ ID: incidentID });
-      if (existingReport) {
-        return { ID: incidentID, message: "Report Incident already exists" };
-      }
-
-      try {
-        const reportIncidentEntry = {
-          ID: incidentID,
-          title: title,
-          description: description,
-          type: type,
-          customer_ID: customer || null,
-        };
-
-        await INSERT.into(ReportIncidentEntity).entries(reportIncidentEntry);
-
-        LOG.info("ReportIncident created successfully", { incidentID });
-
-        const incidentEntry = {
-          ID_ID: incidentID,
-          title: title,
-          status: "OPEN",
-          priority: PRIORITY_BY_TYPE[type],
-          category: null,
-          country: null,
-          assignedTo: null,
-          resolvedAt: null,
-          slaDuration: SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]],
-          slaStartTime: Date.now(),
-          slaDueDate:
-            Date.now() +
-            SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]] * 60 * 60 * 1000,
-          slaStatus: "ONTRACK",
-          slaBreachedAt: null,
-          resolvedAt: null,
-        };
-        console.log(incidentEntry.priority);
-        console.log(SLA_DURATION_HOURS[PRIORITY_BY_TYPE[type]]);
-        await INSERT.into(Incidents).entries(incidentEntry);
-
-        LOG.info("Incident created successfully", { incidentEntry });
-
-        const verifyIncident = await SELECT.one
-          .from(Incidents)
-          .where({ ID_ID: incidentID });
-        if (!verifyIncident) {
-          LOG.error("Incident creation verification failed", { incidentID });
-          throw new Error("Failed to verify incident creation");
-        }
-        LOG.info("Incident verified in database", {
-          incidentID,
-          incident: verifyIncident,
-        });
-
-        await this.auditLogger(
-          "Incident",
-          incidentID,
-          "CREATE",
-          null,
-          null,
-          null
-        );
-
-        return {
-          ID: incidentID,
-          message: "Incident Successfully reported",
-        };
-      } catch (err) {
-        LOG.error("Failed to create incident entry", err);
-        throw cds.error({ code: 500, message: "PERSIST_FAILED" });
-      }
-    });
-
-    this.on("incidentStats", this.incidentStats);
-    this.on("avgByCategory", this.avgResolutionTimeByType);
-
-    this.on("runScheduledJob", async (req) => {
-      return this.runScheduledJob(req);
-    });
-    return super.init();
+  async _runScheduledJob(req) {
+    return this.runScheduledJob(req);
   }
 
   async runScheduledJob(req) {
@@ -257,7 +172,7 @@ class IncidentService extends cds.ApplicationService {
     cds.spawn(async () => {
       try {
         const deletedCount = await this.cleanupClosedIncidents();
-        await this.setSLAProperties();
+        await this.setSLAProperties()
         LOG.info("Scheduled job finished", { deletedCount });
       } catch (err) {
         LOG.error("Scheduled job failed", err);
@@ -311,7 +226,7 @@ class IncidentService extends cds.ApplicationService {
   async checkIncident(req) {
     const { Incidents } = this.entities;
     const incidentId = req.data?.incidentId || req.data?.incidentID;
-
+    
     if (!incidentId)
       throw cds.error({ code: 400, message: "incidentId is required" });
 
@@ -353,18 +268,85 @@ class IncidentService extends cds.ApplicationService {
     if (incident.status === "CLOSED")
       throw cds.error({ code: 400, message: "Incident is already closed" });
     if (!user) throw cds.error({ code: 404, message: "Invalid user id" });
-    if (req.event != "reassignIncident") {
-      if (incident.assignedTo_userId)
-        throw cds.error({
-          code: 403,
-          message: "Incident is already assigned to user",
-        });
-    }
+    if (incident.assignedTo_userId)
+      throw cds.error({
+        code: 403,
+        message: "Incident is already assigned to user",
+      });
   }
+
+    async _closeIncident(req) {
+      const { Incidents, ReportIncidentEntity, IncidentResolveTime } =
+        this.entities;
+      const incidentId = req.data.incidentId;
+
+      if (!incidentId) {
+        throw cds.error({ code: 400, message: "incidentId is required" });
+      }
+
+      
+      const incident = await SELECT.one
+        .from(ReportIncidentEntity)
+        .where({ ID: incidentId });
+      if (!incident) {
+        throw cds.error({ code: 404, message: "Incident not found" });
+      }
+
+      const oldStatus = incident.status;
+      const resolvedAt = new Date();
+
+    try {
+      await UPDATE(Incidents).set({ status: 'CLOSED', resolvedAt }).where({ ID_ID: incidentId });
+      await this.auditLogger('Incident', incidentId, 'CLOSE', 'status', oldStatus, 'CLOSED');
+
+      const createdAt = incident.createdAt
+          let timeSpent;
+          if (createdAt) {
+            timeSpent = Math.max(0, Math.round((new Date() - new Date(createdAt)) / 60000));
+            
+              await INSERT.into(IncidentResolveTime).entries({
+                incidentID_ID: incidentId, 
+                incidentType: incident.type,
+                timeSpent
+              });
+              
+              LOG.info('IncidentResolveTime entity not present — skipping time tracking', { incidentId, timeSpent });
+      }
+    } catch (err) {
+      LOG.error('Failed to close incident', err);
+      throw cds.error({ code: 500, message: 'PERSIST_FAILED' });
+    }
+
+      LOG.info("Incident closed successfully", { incidentId });
+      return { ID: incidentId, status: "CLOSED" };
+    }
+    async _reopenIncident(req) {
+      const {Incidents} = this.entities;
+      const { incidentId} = req.data
+
+      const incident = await SELECT.one.from(Incidents).where({ID_ID : incidentId})
+      if(!incident) throw cds.error({code:404, message: 'There is no incident with this id'});
+      if(incident.status !== 'CLOSED') throw cds.error({code: 403, message: 'To reopen the incident it should be closed'})
+      const now = Date.now()
+      await UPDATE(Incidents).set({resolvedAt: null, slaBreachedAt: null, slaStartTime: now, slaDueDate: now + incident.slaDuration, status: 'OPEN', slaStatus: 'ONTRACK' }).where({ID_ID: incidentId})
+
+      const updatedEntity = await SELECT.one.from(Incidents).where({ID_ID: incidentId})
+      await this.auditLogger(Incidents, incidentId, 'REOPEN', 'status', 'CLOSE', updatedEntity.status)
+      LOG.info('Incident has been reopened, following fields where changed: status slaStatus resolvedAt slaBreachedAt slaStartTime slaDueDate')
+      return {
+            ID     : incidentId,
+            status : updatedEntity.status
+      }
+      
+    }
+
+
+
+
 
   /**
    * Retrieves statistical information about incidents
-   * Provides counts for total, open, and closed incidents
+   * Provides counts for total, open, and closed incidentsFnow
    * @returns {Promise<object>} Statistics object with incident counts
    * @returns {number} return.totalIncidents - Total number of incidents
    * @returns {number} return.openIncidents - Number of incidents with OPEN status
@@ -415,30 +397,29 @@ class IncidentService extends cds.ApplicationService {
     return deletedCount;
   }
 
+
   async setSLAProperties() {
-    cds.spawn({ tenant: "anonymous" }, async (tx) => {
+    cds.spawn({ tenant: 'anonymous' }, async (tx) => {
       const { Incidents } = tx.entities;
-      const now = Date.now();
+      const now = Date.now()
       const openIncidents = await tx.run(
         SELECT.from(Incidents).where({
-          status: { "!=": "CLOSED" },
+          status: { '!=': 'CLOSED' }
         })
       );
-
+    
       for (const incident of openIncidents) {
         const newStatus = this.UpdateSlaStatus(incident);
-
+        
         if (newStatus !== incident.slaStatus) {
           await tx.run(
-            UPDATE(Incidents)
-              .set({
-                slaStatus: newStatus,
-              })
-              .where({ ID_ID: incident.ID_ID })
-          );
-          LOG.info("Incident SLA Status Updated Successfully");
+            UPDATE(Incidents).set({
+              slaStatus :  newStatus
+            }).where({ID_ID: incident.ID_ID})
+          )
+          LOG.info('Incident SLA Status Updated Successfully');
         }
-
+        
         if (newStatus === "BREACHED" && !incident.slaBreachedAt) {
           await tx.run(
             UPDATE(Incidents)
@@ -448,33 +429,21 @@ class IncidentService extends cds.ApplicationService {
         }
       }
     });
+  
   }
-  UpdateSlaStatus(incident) {
-    const currentTime = Date.now();
-    const timeRemaining = incident.slaDueDate - currentTime;
-    const totalDuration = incident.slaDuration * 60 * 60 * 1000;
-
-    if (timeRemaining <= 0) {
-      return "BREACHED";
-    } else if (timeRemaining < totalDuration * 0.25) {
-      return "ATRISK";
-    } else {
-      return "ONTRACK";
-    }
-  }
-
-  async avgResolutionTimeByType() {
-    const { IncidentResolveTime } = this.entities;
-
-    const avgTimes = await SELECT.from(IncidentResolveTime)
-      .columns(
-        "incidentType",
-        { func: "count", as: "count" },
-        { func: "avg", args: [{ ref: ["timeSpent"] }], as: "avgTime" }
-      )
-      .groupBy("incidentType");
-    LOG.info("Successfully retrieved the Average Times By Type");
-    return avgTimes;
+UpdateSlaStatus(incident) {
+  const currentTime = Date.now();
+  const timeRemaining = incident.slaDueDate - currentTime;
+  const totalDuration = incident.slaDuration * 60 * 60 * 1000; 
+  
+  if (timeRemaining <= 0) {
+    return "BREACHED";
+  } else if (timeRemaining < totalDuration * 0.25) {
+    return "ATRISK";
+  } else {
+    return "ONTRACK";
   }
 }
+}
+
 module.exports = IncidentService;

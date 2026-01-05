@@ -14,3 +14,4 @@ ID_ID;title;status;priority;category_code;country_code;assignedTo_userId;slaDura
 0000dddd-eeee-ffff-gggg-gggggggggg77;Backup Failed;OPEN;HIGH;TECH;GB;;4;1735027200000;1735041600000;ONTRACK;;;2024-12-24T08:00:00Z;emma.wilson@ukservices.co.uk;2024-12-24T08:00:00Z;emma.wilson@ukservices.co.uk
 0000eeee-ffff-gggg-hhhh-hhhhhhhhhh88;Payment Error;OPEN;HIGH;BILLING;CN;john.doe;4;1735121400000;1735135800000;ATRISK;;;2024-12-25T09:30:00Z;lisa.chen@asiapacific.com;2024-12-25T09:30:00Z;lisa.chen@asiapacific.com
 0000ffff-gggg-hhhh-iiii-iiiiiiiiii99;Report Generation Slow;OPEN;MEDIUM;SOFTWARE;FR;;8;1735207800000;1735236600000;ONTRACK;;;2024-12-26T11:00:00Z;sophie.laurent@enterprise.fr;2024-12-26T11:00:00Z;sophie.laurent@enterprise.fr
+11111111-1111-1111-1111-111111111111;Reopen Test Incident;CLOSED;MEDIUM;TECH;US;;8;1735725600000;1735754400000;MET;;2025-01-01;2025-01-01T10:00:00Z;system;2025-01-01T12:00:00Z;system
