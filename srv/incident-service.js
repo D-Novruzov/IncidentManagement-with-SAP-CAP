@@ -3,7 +3,12 @@ const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
 const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require('./config/sla-config');
-const { message } = require("@sap/cds/lib/log/cds-error");
+const { UPDATE } = require("@sap/cds/lib/ql/cds-ql");
+const priority = ["LOW", 
+  "MEDIUM",
+  "HIGH",
+  "CRITICAL"
+]
 /**
  * IncidentService - Handles all incident management operations
  * Provides functionality for creating, updating, assigning, and closing incidents
@@ -423,9 +428,16 @@ class IncidentService extends cds.ApplicationService {
         if (newStatus === "BREACHED" && !incident.slaBreachedAt) {
           await tx.run(
             UPDATE(Incidents)
-              .set({ slaBreachedAt: now })
+              .set({ slaBreachedAt: now, priority: "CRITICAL" })
               .where({ ID_ID: incident.ID_ID })
           );
+        }
+        const nextStatusIndex = priority.indexOf(incident.priority)
+        if(newStatus === 'ATRISK' && nextStatusIndex != priority.length - 1 && nextStatusIndex >= 0)  {
+          await tx.run( 
+            UPDATE(Incidents).set({priority: priority[nextStatusIndex + 1] }).where({ID_ID: incident.ID_ID})
+          )
+          LOG.info('this is the next priorityL: ', priority[nextStatusIndex + 1])
         }
       }
     });
