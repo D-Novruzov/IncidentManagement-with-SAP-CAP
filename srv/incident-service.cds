@@ -8,7 +8,7 @@ service IncidentService @(path: '/incidents') {
   entity ReportIncidentEntity as projection on my.ReportIncident;
 
 
-  @requires: 'admin'
+
   entity IncidentResolveTime  as projection on my.IncidentResolveTime;
 
   annotate IncidentResolveTime with @(requires: 'admin');
@@ -52,18 +52,5 @@ service IncidentService @(path: '/incidents') {
     date        : Date;
     message     : String;
   };
-
-  function incidentStats()                                                                                                   returns {
-    totalIncidents  : Integer;
-    openIncidents   : Integer;
-    closedIncidents : Integer;
-    isConsistent    : Boolean;
-  };
-
-  function avgResolutionTimeByType()                                                                                         returns array of {
-    incidentType : my.IncidentType;
-    count        : Integer;
-    avgTime      : Integer;
-  }
 
 }

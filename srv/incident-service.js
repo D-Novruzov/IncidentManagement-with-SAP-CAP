@@ -30,7 +30,6 @@ class IncidentService extends cds.ApplicationService {
     this.before("assignIncident", this.checkAssignIncident);
     this.on("assignIncident", this._assignIncident);
     this.on("ReportIncidentAction", this._reportIncidentAction);
-    this.on("incidentStats", this._incidentStats);
     this.on("runScheduledJob", this._runScheduledJob);
     return super.init();
   }
@@ -164,9 +163,6 @@ class IncidentService extends cds.ApplicationService {
     }
   }
 
-  async _incidentStats(req) {
-    return this.incidentStats(req);
-  }
 
   async _runScheduledJob(req) {
     return this.runScheduledJob(req);
@@ -358,31 +354,6 @@ class IncidentService extends cds.ApplicationService {
    * @returns {number} return.openIncidents - Number of incidents with OPEN status
    * @returns {number} return.closedIncidents - Number of incidents with CLOSED status
    */
-  async incidentStats() {
-    const { Incidents } = this.entities;
-
-    const [{ count: totalIncidents }] = await SELECT.from(Incidents).columns([
-      { func: "count", args: [{ ref: ["ID"] }], as: "count" },
-    ]);
-
-    const [{ count: openIncidents }] = await SELECT.from(Incidents)
-      .where({ status: "OPEN" })
-      .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]);
-
-    const [{ count: closedIncidents }] = await SELECT.from(Incidents)
-      .where({ status: "CLOSED" })
-      .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]);
-    const isConsistent = totalIncidents == openIncidents + closedIncidents;
-    LOG.info("Incidents stats retrieved", {
-      entity: "Incidents",
-    });
-    return {
-      totalIncidents,
-      openIncidents,
-      closedIncidents,
-      isConsistent,
-    };
-  }
 
   /**
    * Removes all closed incidents from the database
