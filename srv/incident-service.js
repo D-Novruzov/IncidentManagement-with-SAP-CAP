@@ -3,7 +3,6 @@ const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
 const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require('./config/sla-config');
-const { UPDATE } = require("@sap/cds/lib/ql/cds-ql");
 const priority = ["LOW", 
   "MEDIUM",
   "HIGH",
@@ -42,17 +41,18 @@ class IncidentService extends cds.ApplicationService {
     const { incidentID, userId } = req.data || {};
     LOG.info('Extracted params:', { incidentID, userId });
 
-    const incident = await SELECT.one.from(Incidents).where({ ID_ID: incidentID });
+    cds.tx(req, async (tx) => {
+      const incident = tx.run(await SELECT.one.from(Incidents).where({ ID_ID: incidentID }).forUpdate());
     
-    if (!incident) {
+     if (!incident) {
       LOG.error('Incident not found during assignment', { incidentID });
       throw cds.error({ code: 404, message: 'Incident not found' });
     }
 
     const oldAssignee = incident.assignedTo_userId;
-    await UPDATE(Incidents)
+    await tx.run(UPDATE(Incidents)
       .set({ assignedTo_userId: userId })
-      .where({ ID_ID: incidentID });
+      .where({ ID_ID: incidentID }));
 
     await this.auditLogger(
       "Incident",
@@ -69,6 +69,7 @@ class IncidentService extends cds.ApplicationService {
       entity: "ReportIncidentEntity",
       caller: req.user?.id,
     });
+  })
   }
 
   async _reportIncidentAction(req) {
@@ -410,7 +411,7 @@ class IncidentService extends cds.ApplicationService {
       const openIncidents = await tx.run(
         SELECT.from(Incidents).where({
           status: { '!=': 'CLOSED' }
-        })
+        }).forUpdate()
       );
     
       for (const incident of openIncidents) {
