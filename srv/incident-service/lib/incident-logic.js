@@ -12,6 +12,16 @@
     ]
     const {createAuditLogger} = require('../../utils/audit-logger')
 
+    
+
+    const advancedSearch =(req) => {
+      
+      const {title, minPriority, status} = req.http.req.query || {}
+      if(title) req.query.where({ title : { 'like': `%${title}%`}});
+      if(priority) req.query.where({priority : minPriority}) 
+      if(status) req.query.where({status : {'like': `%${ status}%`}}) 
+      LOG.info('advanced query reached the end')
+      }
 
 
 
@@ -255,5 +265,5 @@
 
 
   module.exports = {
-    _reopenIncident, _assignIncident, _closeIncident, _reportIncidentAction, checkIncident, checkAssignIncident
+    advancedSearch, _reopenIncident, _assignIncident, _closeIncident, _reportIncidentAction, checkIncident, checkAssignIncident
   }
