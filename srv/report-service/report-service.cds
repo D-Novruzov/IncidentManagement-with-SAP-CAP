@@ -1,5 +1,5 @@
 
-using my.incidents as my from '../db/schema';
+using my.incidents as my from '../../db/schema';
 
 
 service ReportService @(path: '/reports') {
