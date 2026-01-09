@@ -1,4 +1,7 @@
-
+/**
+ * Scheduled jobs and SLA maintenance for Incident service.
+ * Contains cleanup and SLA status update routines.
+ */
 const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
@@ -8,10 +11,21 @@ const priority = ["LOW",
   "CRITICAL"
 ]
 
+  /**
+   * Public action wrapper for the scheduled job.
+   * @param {import('@sap/cds/apis/services').Request} req
+   * @returns {Promise<{message:string}>}
+   */
   const _runScheduledJob =  async (req) =>  {
     return runScheduledJob(req);
   }
 
+  /**
+   * Executes the scheduled maintenance job within tenant context.
+   * - Cleans up closed incidents
+   * - Updates SLA properties for open incidents
+   * @param {import('@sap/cds/apis/services').Request} req
+   */
   async function runScheduledJob(req) {
     LOG.info("Scheduled job triggered");
 
@@ -31,6 +45,11 @@ const priority = ["LOW",
     
   
 
+  /**
+   * Deletes incidents with status CLOSED.
+   * @param {import('@sap/cds/apis/cds').tx} tx CAP transaction
+   * @returns {Promise<number>} number of deleted records
+   */
   async function cleanupClosedIncidents(tx) {
     const { Incidents } = tx.entities;
 
@@ -44,6 +63,10 @@ const priority = ["LOW",
     return deletedCount;
   }
 
+  /**
+   * Computes and updates SLA related fields for open incidents.
+   * @param {import('@sap/cds/apis/cds').tx} tx CAP transaction
+   */
   async function setSLAProperties(tx) {
     const { Incidents } = tx.entities;
     const now = Date.now();
@@ -90,6 +113,11 @@ const priority = ["LOW",
     
     LOG.info('SLA properties updated', { processedCount: openIncidents.length });
   }
+  /**
+   * Determines SLA status based on time remaining vs total duration.
+   * @param {{slaDueDate:number, slaDuration:number, priority:string}} incident
+   * @returns {"ONTRACK"|"ATRISK"|"BREACHED"}
+   */
   async function UpdateSlaStatus(incident) {
   const currentTime = Date.now();
   const timeRemaining = incident.slaDueDate - currentTime;

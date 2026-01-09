@@ -1,6 +1,11 @@
     
     
     
+    /**
+     * Incident business logic utilities.
+     * Contains logic functions used by IncidentService handlers.
+     * Note: Behavior is unchanged; only documentation/comments added.
+     */
     const cds = require("@sap/cds");
     const LOG = cds.log("incident-service");
     
@@ -14,17 +19,31 @@
 
     
 
+    /**
+     * Adds optional filters to a READ query for Incidents based on URL parameters.
+     *
+     * Supported query params:
+     * - title: partial match on `title`
+     * - minPriority: filters by `priority` equal to provided minimum
+     * - status: partial match on `status`
+     *
+     * @param {import('@sap/cds/apis/services').Request} req CAP request
+     */
     const advancedSearch =(req) => {
-      
       const {title, minPriority, status} = req.http.req.query || {}
       if(title) req.query.where({ title : { 'like': `%${title}%`}});
-      if(priority) req.query.where({priority : minPriority}) 
-      if(status) req.query.where({status : {'like': `%${ status}%`}}) 
+      if(priority) req.query.where({priority : minPriority})
+      if(status) req.query.where({status : {'like': `%${ status}%`}})
       LOG.info('advanced query reached the end')
       }
 
 
 
+    /**
+     * Validate incident existence and status prior to closing.
+     * @param {import('@sap/cds/apis/services').Request} req
+     * @param {Record<string, any>} entities
+     */
     const checkIncident = async (req, entities) => {
     const { Incidents } = entities;
     
@@ -43,6 +62,12 @@
     if (incident.status === "CLOSED")
       throw cds.error({ code: 400, message: "Incident is already closed" });
   }
+    /**
+     * Close an incident: updates status, writes resolvedAt, and logs audit.
+     * @param {import('@sap/cds/apis/services').Request} req
+     * @param {Record<string, any>} entities
+     * @returns {{ID:string, status:string}}
+     */
     const _closeIncident  = async (req, entities) =>  {
       const { Incidents, ReportIncidentEntity, IncidentResolveTime } = entities;
       const auditLogger = createAuditLogger(entities);
@@ -88,6 +113,12 @@
       LOG.info("Incident closed successfully", { incidentId });
       return { ID: incidentId, status: "CLOSED" };
     }
+     /**
+      * Reopen a previously closed incident and reset SLA fields.
+      * @param {import('@sap/cds/apis/services').Request} req
+      * @param {Record<string, any>} entities
+      * @returns {{ID:string, status:string}}
+      */
      const _reopenIncident = async (req, entities) => {
       const {Incidents} = entities;
       const { incidentId} = req.data
@@ -108,6 +139,11 @@
       }
       
     }
+    /**
+     * Validate assignment preconditions for an incident and user.
+     * @param {import('@sap/cds/apis/services').Request} req
+     * @param {Record<string, any>} entities
+     */
     const checkAssignIncident = async (req, entities) => {
     const { Incidents, UserReference } = entities;
     const incidentID = req.data?.incidentID;
@@ -133,6 +169,11 @@
         message: "Incident is already assigned to user",
       });
   }
+    /**
+     * Assign an incident to a specific user within a transaction.
+     * @param {import('@sap/cds/apis/services').Request} req
+     * @param {Record<string, any>} entities
+     */
     const _assignIncident = async (req, entities) => {
       const { Incidents } = entities;
       
@@ -170,6 +211,12 @@
     })
     }
 
+  /**
+   * Create a new report and its associated incident record.
+   * @param {import('@sap/cds/apis/services').Request} req
+   * @param {Record<string, any>} entities
+   * @returns {{ID:string, message:string}}
+   */
   const _reportIncidentAction = async (req, entities) => {
     const { Incidents, ReportIncidentEntity } = entities;
     const { incidentID, title, description, type, customer } = req.data || {};
@@ -264,6 +311,13 @@
   }
 
 
+  /** Public API of incident logic functions. */
   module.exports = {
-    advancedSearch, _reopenIncident, _assignIncident, _closeIncident, _reportIncidentAction, checkIncident, checkAssignIncident
+    advancedSearch,
+    _reopenIncident,
+    _assignIncident,
+    _closeIncident,
+    _reportIncidentAction,
+    checkIncident,
+    checkAssignIncident
   }

@@ -1,7 +1,16 @@
+/**
+ * Reporting logic for incidents and resolution analytics.
+ */
 const cds = require("@sap/cds");
 const LOG = cds.log("report-service");
 const { createAuditLogger } = require('../../utils/audit-logger');
 
+/**
+ * Returns total/open/closed incident counts and consistency check flag.
+ * @param {import('@sap/cds/apis/services').Request} req
+ * @param {Record<string, any>} entities
+ * @returns {{totalIncidents:number, openIncidents:number, closedIncidents:number, isConsistent:boolean}}
+ */
 const incidentStats = async (req, entities) => {
   const { Incidents } = entities;
   const auditLogger = createAuditLogger(entities);
@@ -37,6 +46,11 @@ const incidentStats = async (req, entities) => {
   };
 };
 
+/**
+ * Returns average resolution time and count grouped by incident type.
+ * @param {import('@sap/cds/apis/services').Request} req
+ * @param {Record<string, any>} entities
+ */
 const avgResolutionTimeByType = async (req, entities) => {
   const { IncidentResolveTime } = entities;
   const auditLogger = createAuditLogger(entities);
@@ -59,6 +73,11 @@ const avgResolutionTimeByType = async (req, entities) => {
   return result;
 };
 
+/**
+ * Returns open incident counts grouped by priority.
+ * @param {import('@sap/cds/apis/services').Request} req
+ * @param {Record<string, any>} entities
+ */
 const incidentsByPriority = async (req, entities) => {
   const { Incidents } = entities;
   const auditLogger = createAuditLogger(entities);

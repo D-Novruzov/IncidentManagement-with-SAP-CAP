@@ -1,4 +1,7 @@
-
+/**
+ * IncidentService: CAP service handlers wiring for incident operations.
+ * Registers before/on handlers and delegates to logic layer.
+ */
 const cds = require("@sap/cds");
 
 
@@ -7,6 +10,7 @@ const  {_runScheduledJob} = require('./lib/jobs')
 
 
 
+/** Service implementation for Incident operations. */
 class IncidentService extends cds.ApplicationService {
   async init() {
     const entities = this.entities;
