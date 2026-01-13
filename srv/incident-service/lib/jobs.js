@@ -31,7 +31,7 @@ const priority = ["LOW",
 
     
       try {
-        await cds.tx({tenant: req.tenant }, async (tx) => {
+        await cds.spawn({tenant: req.tenant }, async (tx) => {
           const deletedCount = await cleanupClosedIncidents(tx);
           await setSLAProperties(tx);
           LOG.info("Scheduled job finished", { deletedCount });

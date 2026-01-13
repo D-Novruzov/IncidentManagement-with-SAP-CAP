@@ -4,9 +4,10 @@
   "description": "A simple CAP project.",
   "dependencies": {
     "@sap/cds": "^9",
+    "@sap/cds-mtxs": "^3",
     "@sap/logging": "^9.0.0",
-    "express": "^4",
-    "@sap/xssec": "^4"
+    "@sap/xssec": "^4",
+    "express": "^4"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2",
@@ -20,7 +21,7 @@
       "in_memory_db": true
     },
     "requires": {
-       "db": {
+      "db": {
         "kind": "sqlite",
         "credentials": {
           "url": ":memory:"
@@ -60,9 +61,14 @@
         },
         "jobscheduler": {
           "kind": "jobscheduler"
-        }
+        },
+        "multitenancy": true
+      },
+      "[with-mtx]": {
+        "multitenancy": true
       }
-    }
+    },
+    "profile": "with-mtx-sidecar"
   },
   "private": true
 }
