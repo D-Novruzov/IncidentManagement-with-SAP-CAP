@@ -1,10 +1,10 @@
-1/**
+/**
  * Reporting logic for incidents and resolution analytics.
  */
 const cds = require("@sap/cds");
 const LOG = cds.log("report-service");
-const { createAuditLogger } = require('../../utils/audit-logger');
-const ReportRepository = require('./report-repository')
+const { createAuditLogger } = require("../../utils/audit-logger");
+const ReportRepository = require("./report-repository");
 
 /**
  * Returns total/open/closed incident counts and consistency check flag.
@@ -13,12 +13,12 @@ const ReportRepository = require('./report-repository')
  * @returns {{totalIncidents:number, openIncidents:number, closedIncidents:number, isConsistent:boolean}}
  */
 const incidentStats = async (req, entities) => {
-  const reportRepository = new ReportRepository(entities)
+  const reportRepository = new ReportRepository(entities);
   const auditLogger = createAuditLogger(entities);
 
-  const totalIncidents = reportRepository.totalIncidents()
-  const openIncidents = reportRepository.openIncidents()
-  const closedIncidents = reportRepository.closedIncidents()
+  const totalIncidents = await reportRepository.totalIncidents();
+  const openIncidents = await reportRepository.openIncidents();
+  const closedIncidents = await reportRepository.closedIncidents();
   const isConsistent = totalIncidents == openIncidents + closedIncidents;
 
   await auditLogger("Incidents", null, "GET", null, null, null);
@@ -44,10 +44,10 @@ const incidentStats = async (req, entities) => {
  * @param {Record<string, any>} entities
  */
 const avgResolutionTimeByType = async (req, entities) => {
-  const reportRepository = new ReportRepository(entities)
+  const reportRepository = new ReportRepository(entities);
   const auditLogger = createAuditLogger(entities);
 
-  const result = reportRepository.avgResolutionTimeByType()
+  const result = await reportRepository.avgResolutionTimeByType();
 
   await auditLogger("IncidentResolveTime", null, "GET", null, null, null);
 
@@ -65,10 +65,10 @@ const avgResolutionTimeByType = async (req, entities) => {
  * @param {Record<string, any>} entities
  */
 const incidentsByPriority = async (req, entities) => {
-  const reportRepository = new ReportRepository(entities)
+  const reportRepository = new ReportRepository(entities);
   const auditLogger = createAuditLogger(entities);
 
-  const result = reportRepository.incidentsByPriority()
+  const result = await reportRepository.incidentsByPriority();
 
   await auditLogger("Incidents", null, "GET", null, null, null);
 
