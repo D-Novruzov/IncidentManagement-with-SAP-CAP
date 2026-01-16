@@ -34,7 +34,10 @@ service IncidentService @(path: '/incidents') {
     ID     : String;
     status : String
   };
-
+  @(restrict: [{
+    grant: '*',
+    to: 'admin'
+  }])
   action   reopenIncident(incidentId: String)                                                                                returns {
     ID     : String;
     status : String

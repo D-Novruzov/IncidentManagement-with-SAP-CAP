@@ -8,23 +8,23 @@ namespace my.incidents;
 
 @odata.draft.enabled
 entity Incident : managed {
-  key ID            : Association to ReportIncident;
-      title         : String(100)                     @mandatory;
-      description   : localized String(500);
+  key ID          : Association to ReportIncident;
+      title       : String(100)                     @mandatory;
+      description : localized String(500);
 
-      status        : Status                          @mandatory;
-      priority      : Priority                        @mandatory;
+      status      : Status                          @mandatory;
+      priority    : Priority                        @mandatory;
 
-      category      : Association to IncidentCategory @mandatory;
-      country       : Country;
+      category    : Association to IncidentCategory @mandatory;
+      country     : Country;
 
-      assignedTo    : Association to UserReference;
-      slaDuration   : Integer;
-      slaStartTime  : Integer;
-      slaDueDate    : Integer;
-      slaStatus     : SlaStatus;
-      slaBreachedAt : Timestamp;
-      resolvedAt    : Date
+      assignedTo   : Association to UserReference;
+      slaDuration  : Integer;
+      slaStartTime : Timestamp;
+      slaDueDate   : Timestamp;
+      sla_status   : SlaStatus;
+      slaBreachedAt: Timestamp;
+      resolvedAt   : Date
 }
 
 entity IncidentResolveTime : managed {
@@ -104,8 +104,7 @@ type Action       : String enum {
   UPDATE;
   CLOSE
 };
-
-type SlaStatus    : String enum {
+type SlaStatus : String enum {
   MET;
   ATRISK;
   BREACHED;

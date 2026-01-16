@@ -1,9 +1,10 @@
-/**
+1/**
  * Reporting logic for incidents and resolution analytics.
  */
 const cds = require("@sap/cds");
 const LOG = cds.log("report-service");
 const { createAuditLogger } = require('../../utils/audit-logger');
+const ReportRepository = require('./report-repository')
 
 /**
  * Returns total/open/closed incident counts and consistency check flag.
@@ -12,21 +13,12 @@ const { createAuditLogger } = require('../../utils/audit-logger');
  * @returns {{totalIncidents:number, openIncidents:number, closedIncidents:number, isConsistent:boolean}}
  */
 const incidentStats = async (req, entities) => {
-  const { Incidents } = entities;
+  const reportRepository = new ReportRepository(entities)
   const auditLogger = createAuditLogger(entities);
 
-  const [{ count: totalIncidents }] = await SELECT.from(Incidents).columns([
-    { func: "count", args: [{ ref: ["ID"] }], as: "count" },
-  ]);
-
-  const [{ count: openIncidents }] = await SELECT.from(Incidents)
-    .where({ status: "OPEN" })
-    .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]);
-
-  const [{ count: closedIncidents }] = await SELECT.from(Incidents)
-    .where({ status: "CLOSED" })
-    .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]);
-
+  const totalIncidents = reportRepository.totalIncidents()
+  const openIncidents = reportRepository.openIncidents()
+  const closedIncidents = reportRepository.closedIncidents()
   const isConsistent = totalIncidents == openIncidents + closedIncidents;
 
   await auditLogger("Incidents", null, "GET", null, null, null);
@@ -52,16 +44,10 @@ const incidentStats = async (req, entities) => {
  * @param {Record<string, any>} entities
  */
 const avgResolutionTimeByType = async (req, entities) => {
-  const { IncidentResolveTime } = entities;
+  const reportRepository = new ReportRepository(entities)
   const auditLogger = createAuditLogger(entities);
 
-  const result = await SELECT.from(IncidentResolveTime)
-    .columns([
-      "IncidentType",
-      { func: "count", args: [{ ref: ["ID"] }], as: "count" },
-      { func: "avg", args: [{ ref: ["timeSpent"] }], as: "avgTime" },
-    ])
-    .groupBy("incidentType");
+  const result = reportRepository.avgResolutionTimeByType()
 
   await auditLogger("IncidentResolveTime", null, "GET", null, null, null);
 
@@ -79,13 +65,10 @@ const avgResolutionTimeByType = async (req, entities) => {
  * @param {Record<string, any>} entities
  */
 const incidentsByPriority = async (req, entities) => {
-  const { Incidents } = entities;
+  const reportRepository = new ReportRepository(entities)
   const auditLogger = createAuditLogger(entities);
 
-  const result = await SELECT.from(Incidents)
-    .where({ status: "OPEN" })
-    .columns(['priority as Priority', { func: "count", args: [{ ref: ["ID"] }], as: "count" }])
-    .groupBy("priority");
+  const result = reportRepository.incidentsByPriority()
 
   await auditLogger("Incidents", null, "GET", null, null, null);
 
