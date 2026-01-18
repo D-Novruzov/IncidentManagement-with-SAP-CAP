@@ -5,15 +5,18 @@
 const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
-const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require('../../config/sla-config');
-const { createAuditLogger } = require('../../utils/audit-logger');
-const { IncidentRepository } = require('./incident-repository');
+const {
+  PRIORITY_BY_TYPE,
+  SLA_DURATION_HOURS,
+} = require("../../config/sla-config");
+const { createAuditLogger } = require("../../utils/audit-logger");
+const { IncidentRepository } = require("./incident-repository");
 
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 /**
  * Factory to create repository instance from entities
- * @param {Record<string, any>} entities 
+ * @param {Record<string, any>} entities
  * @returns {IncidentRepository}
  */
 const createRepository = (entities) => new IncidentRepository(entities);
@@ -24,10 +27,10 @@ const createRepository = (entities) => new IncidentRepository(entities);
  */
 const advancedSearch = (req) => {
   const { title, minPriority, status } = req.http.req.query || {};
-  if (title) req.query.where({ title: { 'like': `%${title}%` } });
+  if (title) req.query.where({ title: { like: `%${title}%` } });
   if (minPriority) req.query.where({ priority: minPriority });
-  if (status) req.query.where({ status: { 'like': `%${status}%` } });
-  LOG.info('advanced query reached the end');
+  if (status) req.query.where({ status: { like: `%${status}%` } });
+  LOG.info("advanced query reached the end");
 };
 
 /**
@@ -67,7 +70,7 @@ const _closeIncident = async (req, entities) => {
   const auditLogger = createAuditLogger(entities);
   const incidentId = req.data.incidentId;
 
-  // Validation
+  // Validate incidentId (also checked in checkIncident before hook when used via controller)
   if (!incidentId) {
     throw cds.error({ code: 400, message: "incidentId is required" });
   }
@@ -84,22 +87,32 @@ const _closeIncident = async (req, entities) => {
   try {
     // Close the incident
     await repository.closeIncident(incidentId, resolvedAt);
-    await auditLogger('Incident', incidentId, 'CLOSE', 'status', oldStatus, 'CLOSED');
+    await auditLogger(
+      "Incident",
+      incidentId,
+      "CLOSE",
+      "status",
+      oldStatus,
+      "CLOSED",
+    );
 
     // Track resolution time
     const createdAt = incident.createdAt;
     if (createdAt) {
-      const timeSpent = Math.max(0, Math.round((new Date() - new Date(createdAt)) / 60000));
+      const timeSpent = Math.max(
+        0,
+        Math.round((new Date() - new Date(createdAt)) / 60000),
+      );
       await repository.createResolveTime({
         incidentID_ID: incidentId,
         incidentType: incident.type,
-        timeSpent
+        timeSpent,
       });
-      LOG.info('IncidentResolveTime recorded', { incidentId, timeSpent });
+      LOG.info("IncidentResolveTime recorded", { incidentId, timeSpent });
     }
   } catch (err) {
-    LOG.error('Failed to close incident', err);
-    throw cds.error({ code: 500, message: 'PERSIST_FAILED' });
+    LOG.error("Failed to close incident", err);
+    throw cds.error({ code: 500, message: "PERSIST_FAILED" });
   }
 
   LOG.info("Incident closed successfully", { incidentId });
@@ -120,10 +133,16 @@ const _reopenIncident = async (req, entities) => {
   // Find and validate incident
   const incident = await repository.findIncidentById(incidentId);
   if (!incident) {
-    throw cds.error({ code: 404, message: 'There is no incident with this id' });
+    throw cds.error({
+      code: 404,
+      message: "There is no incident with this id",
+    });
   }
-  if (incident.status !== 'CLOSED') {
-    throw cds.error({ code: 403, message: 'To reopen the incident it should be closed' });
+  if (incident.status !== "CLOSED") {
+    throw cds.error({
+      code: 403,
+      message: "To reopen the incident it should be closed",
+    });
   }
 
   // Calculate new SLA fields
@@ -133,8 +152,8 @@ const _reopenIncident = async (req, entities) => {
     slaBreachedAt: null,
     slaStartTime: now,
     slaDueDate: now + incident.slaDuration,
-    status: 'OPEN',
-    slaStatus: 'ONTRACK'
+    status: "OPEN",
+    slaStatus: "ONTRACK",
   };
 
   // Update incident
@@ -142,12 +161,22 @@ const _reopenIncident = async (req, entities) => {
 
   // Get updated entity for audit
   const updatedEntity = await repository.findIncidentById(incidentId);
-  await auditLogger(entities.Incidents, incidentId, 'REOPEN', 'status', 'CLOSE', updatedEntity.status);
+  await auditLogger(
+    entities.Incidents,
+    incidentId,
+    "REOPEN",
+    "status",
+    "CLOSE",
+    updatedEntity.status,
+  );
 
-  LOG.info('Incident has been reopened', { incidentId, fieldsChanged: Object.keys(reopenData) });
+  LOG.info("Incident has been reopened", {
+    incidentId,
+    fieldsChanged: Object.keys(reopenData),
+  });
   return {
     ID: incidentId,
-    status: updatedEntity.status
+    status: updatedEntity.status,
   };
 };
 
@@ -178,7 +207,10 @@ const checkAssignIncident = async (req, entities) => {
     throw cds.error({ code: 400, message: "Incident is already closed" });
   }
   if (incident.assignedTo_userId) {
-    throw cds.error({ code: 403, message: "Incident is already assigned to user" });
+    throw cds.error({
+      code: 403,
+      message: "Incident is already assigned to user",
+    });
   }
 
   // Check user exists
@@ -198,12 +230,12 @@ const _assignIncident = async (req, entities) => {
   const auditLogger = createAuditLogger(entities);
   const { incidentID, userId } = req.data || {};
 
-  cds.tx(req, async (tx) => {
+  return cds.tx(req, async (tx) => {
     const incident = await repository.findIncidentForUpdate(tx, incidentID);
 
     if (!incident) {
-      LOG.error('Incident not found during assignment', { incidentID });
-      throw cds.error({ code: 404, message: 'Incident not found' });
+      LOG.error("Incident not found during assignment", { incidentID });
+      throw cds.error({ code: 404, message: "Incident not found" });
     }
 
     const oldAssignee = incident.assignedTo_userId;
@@ -215,7 +247,7 @@ const _assignIncident = async (req, entities) => {
       "UPDATE",
       "assignedTo_userId",
       oldAssignee || "",
-      userId
+      userId,
     );
 
     LOG.info("Incident Assigned successfully", {
@@ -268,7 +300,7 @@ const _reportIncidentAction = async (req, entities) => {
       customer_ID: customer || null,
     };
     await repository.createReport(reportEntry);
-    LOG.info('ReportIncident created successfully', { incidentID });
+    LOG.info("ReportIncident created successfully", { incidentID });
 
     // Create incident entry with SLA
     const priority = PRIORITY_BY_TYPE[type];
@@ -284,28 +316,31 @@ const _reportIncidentAction = async (req, entities) => {
       resolvedAt: null,
       slaDuration,
       slaStartTime: Date.now(),
-      slaDueDate: Date.now() + (slaDuration * 60 * 60 * 1000),
+      slaDueDate: Date.now() + slaDuration * 60 * 60 * 1000,
       slaStatus: "ONTRACK",
       slaBreachedAt: null,
     };
 
     await repository.createIncident(incidentEntry);
-    LOG.info('Incident created successfully', { incidentEntry });
+    LOG.info("Incident created successfully", { incidentEntry });
 
     // Verify creation
     const verifyIncident = await repository.findIncidentById(incidentID);
     if (!verifyIncident) {
-      LOG.error('Incident creation verification failed', { incidentID });
-      throw new Error('Failed to verify incident creation');
+      LOG.error("Incident creation verification failed", { incidentID });
+      throw new Error("Failed to verify incident creation");
     }
-    LOG.info('Incident verified in database', { incidentID, incident: verifyIncident });
+    LOG.info("Incident verified in database", {
+      incidentID,
+      incident: verifyIncident,
+    });
 
     // Audit log
     await auditLogger("Incident", incidentID, "CREATE", null, null, null);
 
     return {
       ID: incidentID,
-      message: 'Incident Successfully reported'
+      message: "Incident Successfully reported",
     };
   } catch (err) {
     LOG.error("Failed to create incident entry", err);
@@ -323,5 +358,5 @@ module.exports = {
   checkIncident,
   checkAssignIncident,
   // Export for testing with dependency injection
-  createRepository
+  createRepository,
 };
