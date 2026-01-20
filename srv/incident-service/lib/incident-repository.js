@@ -132,7 +132,7 @@ class IncidentRepository {
   }
 
   /**
-   * Assign incident to user
+   * Assign incident to user (with transaction)
    * @param {object} tx - Transaction context
    * @param {string} incidentId 
    * @param {string} userId 
@@ -140,6 +140,20 @@ class IncidentRepository {
    */
   async assignIncident(tx, incidentId, userId) {
     return tx.run(
+      UPDATE(this.Incidents)
+        .set({ assignedTo_userId: userId })
+        .where({ ID_ID: incidentId })
+    );
+  }
+
+  /**
+   * Assign incident to user by ID (without explicit transaction)
+   * @param {string} incidentId 
+   * @param {string} userId 
+   * @returns {Promise<object>}
+   */
+  async assignIncidentById(incidentId, userId) {
+    return cds.run(
       UPDATE(this.Incidents)
         .set({ assignedTo_userId: userId })
         .where({ ID_ID: incidentId })

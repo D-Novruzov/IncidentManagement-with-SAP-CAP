@@ -1,6 +1,7 @@
 module.exports = {
   testEnvironment: 'node',
-  roots: ['<rootDir>/test'],
-  moduleDirectories: ['node_modules', '<rootDir>'],
-  verbose: true,
+  testTimeout: 60000,
+  testMatch: ['**/test/**/*.test.js'],
+  collectCoverageFrom: ['srv/**/*.js'],
+  coveragePathIgnorePatterns: ['/node_modules/']
 };

@@ -6,6 +6,7 @@ const mockReopenIncident = jest.fn();
 const mockFindUserById = jest.fn();
 const mockFindIncidentForUpdate = jest.fn();
 const mockAssignIncident = jest.fn();
+const mockAssignIncidentById = jest.fn();
 const mockCreateReport = jest.fn();
 const mockCreateIncident = jest.fn();
 // Replace IncidentRepository with a fake that uses our mock functions
@@ -19,7 +20,7 @@ jest.mock("../srv/incident-service/lib/incident-repository", () => ({
     findUserById: mockFindUserById,
     findIncidentForUpdate: mockFindIncidentForUpdate,
     assignIncident: mockAssignIncident,
-    findReportById: mockFindReportById,
+    assignIncidentById: mockAssignIncidentById,
     createReport: mockCreateReport,
     createIncident: mockCreateIncident,
   })),
@@ -217,13 +218,14 @@ describe("_assignIncident", () => {
   });
   test("should assign incident to a user", async () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
-    mockFindIncidentForUpdate.mockResolvedValue({});
+    mockFindIncidentById.mockResolvedValue({});
+    mockAssignIncidentById.mockResolvedValue({});
     const result = await _assignIncident(req, {});
     expect(result).toBeUndefined();
   });
   test("should throw error if the assignIncident is not found", async () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
-    mockFindIncidentForUpdate.mockResolvedValue(null);
+    mockFindIncidentById.mockResolvedValue(null);
     await expect(_assignIncident(req, {})).rejects.toThrow(
       "Incident not found",
     );

@@ -230,32 +230,30 @@ const _assignIncident = async (req, entities) => {
   const auditLogger = createAuditLogger(entities);
   const { incidentID, userId } = req.data || {};
 
-  return cds.tx(req, async (tx) => {
-    const incident = await repository.findIncidentForUpdate(tx, incidentID);
+  const incident = await repository.findIncidentById(incidentID);
 
-    if (!incident) {
-      LOG.error("Incident not found during assignment", { incidentID });
-      throw cds.error({ code: 404, message: "Incident not found" });
-    }
+  if (!incident) {
+    LOG.error("Incident not found during assignment", { incidentID });
+    throw cds.error({ code: 404, message: "Incident not found" });
+  }
 
-    const oldAssignee = incident.assignedTo_userId;
-    await repository.assignIncident(tx, incidentID, userId);
+  const oldAssignee = incident.assignedTo_userId;
+  await repository.assignIncidentById(incidentID, userId);
 
-    await auditLogger(
-      "Incident",
-      incidentID,
-      "UPDATE",
-      "assignedTo_userId",
-      oldAssignee || "",
-      userId,
-    );
+  await auditLogger(
+    "Incident",
+    incidentID,
+    "UPDATE",
+    "assignedTo_userId",
+    oldAssignee || "",
+    userId,
+  );
 
-    LOG.info("Incident Assigned successfully", {
-      incidentID,
-      assignedTo: userId,
-      entity: "ReportIncidentEntity",
-      caller: req.user?.id,
-    });
+  LOG.info("Incident Assigned successfully", {
+    incidentID,
+    assignedTo: userId,
+    entity: "ReportIncidentEntity",
+    caller: req.user?.id,
   });
 };
 
