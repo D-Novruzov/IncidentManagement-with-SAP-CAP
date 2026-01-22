@@ -91,27 +91,14 @@
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a>
-<a name='L30'></a><a href='#L30'>30</a>
-<a name='L31'></a><a href='#L31'>31</a>
-<a name='L32'></a><a href='#L32'>32</a>
-<a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a>
-<a name='L36'></a><a href='#L36'>36</a>
-<a name='L37'></a><a href='#L37'>37</a>
-<a name='L38'></a><a href='#L38'>38</a>
-<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L29'></a><a href='#L29'>29</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -120,21 +107,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -145,35 +125,25 @@
  */
 const cds = require("@sap/cds");
 &nbsp;
-&nbsp;
-const { _assignIncident, _closeIncident, _reportIncidentAction, _reopenIncident, checkIncident, checkAssignIncident, advancedSearch } = require('./lib/incident-logic')
-const  {_runScheduledJob} = require('./lib/jobs')
-&nbsp;
-&nbsp;
+const IncidentLogic = require("./lib/incident-logic");
+const { _runScheduledJob } = require("./lib/jobs");
 &nbsp;
 /** Service implementation for Incident operations. */
 class IncidentService extends cds.ApplicationService {
   async init() {
-    const entities = this.entities;
-    
-    this.before('READ', 'Incidents', <span class="fstat-no" title="function not covered" >as</span>ync(req) =&gt; <span class="cstat-no" title="statement not covered" >advancedSearch(req))</span>
-    this.before("closeIncident", async (req) =&gt; await checkIncident(req, entities));
+    const incidentLogic = new IncidentLogic(this.entities);
 &nbsp;
-    this.on("closeIncident", async (req) =&gt; await _closeIncident(req, entities));
-    
-    this.on('reopenIncident', async (req) =&gt; await _reopenIncident(req, entities));
-    
-    this.before("assignIncident", async (req) =&gt; await checkAssignIncident(req, entities));
-    
-    this.on("assignIncident", async (req) =&gt; await _assignIncident(req, entities));
-    
-    this.on("ReportIncidentAction", async (req) =&gt; await _reportIncidentAction(req, entities));
-    
-    this.on("runScheduledJob", <span class="fstat-no" title="function not covered" >as</span>ync (req) =&gt; <span class="cstat-no" title="statement not covered" >await _runScheduledJob(req))</span>;
+    this.before("READ", "Incidents", <span class="fstat-no" title="function not covered" >(r</span>eq) =&gt; <span class="cstat-no" title="statement not covered" >incidentLogic.advancedSearch(req))</span>;
+    this.before("closeIncident", (req) =&gt; incidentLogic.checkIncident(req));
+    this.on("closeIncident", (req) =&gt; incidentLogic._closeIncident(req));
+    this.on("reopenIncident", (req) =&gt; incidentLogic._reopenIncident(req));
+    this.before("assignIncident", (req) =&gt; incidentLogic.checkAssignIncident(req));
+    this.on("assignIncident", (req) =&gt; incidentLogic._assignIncident(req));
+    this.on("ReportIncidentAction", (req) =&gt; incidentLogic._reportIncidentAction(req));
+    this.on("runScheduledJob", <span class="fstat-no" title="function not covered" >(r</span>eq) =&gt; <span class="cstat-no" title="statement not covered" >_runScheduledJob(req))</span>;
+&nbsp;
     return super.init();
   }
-&nbsp;
-&nbsp;
 }
 &nbsp;
 module.exports = IncidentService;
@@ -184,7 +154,7 @@ module.exports = IncidentService;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-21T07:49:11.445Z
+                at 2026-01-22T08:31:14.644Z
             </div>
         <script src="../prettify.js"></script>
         <script>

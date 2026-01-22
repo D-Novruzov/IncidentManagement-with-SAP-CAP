@@ -9,7 +9,7 @@ const mockAssignIncident = jest.fn();
 const mockAssignIncidentById = jest.fn();
 const mockCreateReport = jest.fn();
 const mockCreateIncident = jest.fn();
-// Replace IncidentRepository with a fake that uses our mock functions
+
 jest.mock("../srv/incident-service/lib/incident-repository", () => ({
   IncidentRepository: jest.fn().mockImplementation(() => ({
     findReportById: mockFindReportById,
@@ -26,24 +26,20 @@ jest.mock("../srv/incident-service/lib/incident-repository", () => ({
   })),
 }));
 
-// Prevent audit logger from causing errors
 jest.mock("../srv/utils/audit-logger", () => ({
   createAuditLogger: () => jest.fn().mockResolvedValue(undefined),
 }));
 
-// Mock cds.tx after loading
 const cds = require("@sap/cds");
 cds.tx = jest.fn((req, callback) => Promise.resolve(callback({})));
 
-const {
-  _closeIncident,
-  checkIncident,
-  _reopenIncident,
-  checkAssignIncident,
-  _assignIncident,
-  _reportIncidentAction,
-} = require("../srv/incident-service/lib/incident-logic");
-const { message } = require("@sap/cds/lib/log/cds-error");
+const IncidentLogic = require("../srv/incident-service/lib/incident-logic");
+
+let logic;
+
+beforeEach(() => {
+  logic = new IncidentLogic();
+});
 
 describe("_closeIncident", () => {
   beforeEach(() => {
@@ -61,7 +57,7 @@ describe("_closeIncident", () => {
     mockCreateResolveTime.mockResolvedValue({});
 
     const req = { data: { incidentId: "inc-123" } };
-    const result = await _closeIncident(req, {});
+    const result = await logic._closeIncident(req, {});
 
     expect(result.status).toBe("CLOSED");
     expect(result.ID).toBe("inc-123");
@@ -71,11 +67,12 @@ describe("_closeIncident", () => {
   test("should throw 400 if incidentId is missing", async () => {
     const req = { data: {} };
 
-    await expect(_closeIncident(req, {})).rejects.toThrow(
+    await expect(logic._closeIncident(req, {})).rejects.toThrow(
       "incidentId is required",
     );
   });
 });
+
 describe("_checkIncident", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -86,27 +83,27 @@ describe("_checkIncident", () => {
     });
 
     const req = { data: { incidentId: "inc-123" } };
-    const result = await checkIncident(req, {});
+    const result = await logic.checkIncident(req, {});
 
-    // checkIncident returns undefined on success (no return statement)
     expect(result).toBeUndefined();
     expect(mockFindIncidentById).toHaveBeenCalledWith("inc-123");
   });
   test("should throw error if incidentId is not provided", async () => {
     const req = { data: {} };
 
-    await expect(checkIncident(req, {})).rejects.toThrow(
+    await expect(logic.checkIncident(req, {})).rejects.toThrow(
       "incidentId is required",
     );
   });
   test("should throw error if incident not found in database", async () => {
-    mockFindIncidentById.mockResolvedValue(null); // Returns null = not found
+    mockFindIncidentById.mockResolvedValue(null);
 
     const req = { data: { incidentId: "abc-123" } };
 
-    await expect(checkIncident(req, {})).rejects.toThrow("Incident not found");
+    await expect(logic.checkIncident(req, {})).rejects.toThrow("Incident not found");
   });
 });
+
 describe("_reopenIncident", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -125,7 +122,7 @@ describe("_reopenIncident", () => {
     mockReopenIncident.mockResolvedValue({});
 
     const req = { data: { incidentId: "abd-123" } };
-    const result = await _reopenIncident(req, {});
+    const result = await logic._reopenIncident(req, {});
 
     expect(result).toEqual({ ID: "abd-123", status: "OPEN" });
   });
@@ -133,7 +130,7 @@ describe("_reopenIncident", () => {
     const req = { data: { incidentId: "ADB:213" } };
     mockFindIncidentById.mockResolvedValue(null);
 
-    await expect(_reopenIncident(req, {})).rejects.toThrow(
+    await expect(logic._reopenIncident(req, {})).rejects.toThrow(
       "There is no incident with this id",
     );
     expect(mockFindIncidentById).toHaveBeenCalledWith(req.data.incidentId);
@@ -142,12 +139,13 @@ describe("_reopenIncident", () => {
     const req = { data: { incidentId: "ADB:213" } };
     mockFindIncidentById.mockResolvedValue({ status: "OPEN" });
 
-    await expect(_reopenIncident(req, {})).rejects.toThrow(
+    await expect(logic._reopenIncident(req, {})).rejects.toThrow(
       "To reopen the incident it should be closed",
     );
     expect(mockFindIncidentById).toHaveBeenCalledWith(req.data.incidentId);
   });
 });
+
 describe("checkAssignIncident", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -166,39 +164,39 @@ describe("checkAssignIncident", () => {
     });
     mockFindUserById.mockResolvedValue({});
 
-    const result = await checkAssignIncident(req, {});
+    const result = await logic.checkAssignIncident(req, {});
     expect(result).toBeUndefined();
   });
   test("should throw an error if the incindentID is not sent", async () => {
     const req = { data: { userId: "abcd-123" } };
-    await expect(checkAssignIncident(req, {})).rejects.toThrow(
+    await expect(logic.checkAssignIncident(req, {})).rejects.toThrow(
       "incidentID is required",
     );
   });
   test("should throw an error if the userId is not sent", async () => {
     const req = { data: { incidentID: " asbnsd=12" } };
-    await expect(checkAssignIncident(req, {})).rejects.toThrow(
+    await expect(logic.checkAssignIncident(req, {})).rejects.toThrow(
       "userId is required",
     );
   });
   test("should throw an error if the incident id is not valid", async () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
     mockFindIncidentById.mockResolvedValue(null);
-    await expect(checkAssignIncident(req, {})).rejects.toThrow(
+    await expect(logic.checkAssignIncident(req, {})).rejects.toThrow(
       "Invalid incident id",
     );
   });
   test("should throw an error if the incident is closed", async () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
     mockFindIncidentById.mockResolvedValue({ status: "CLOSED" });
-    await expect(checkAssignIncident(req, {})).rejects.toThrow(
+    await expect(logic.checkAssignIncident(req, {})).rejects.toThrow(
       "Incident is already closed",
     );
   });
   test("should throw an error if the incident is assigned", async () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
     mockFindIncidentById.mockResolvedValue({ assignedTo_userId: "abs=123" });
-    await expect(checkAssignIncident(req, {})).rejects.toThrow(
+    await expect(logic.checkAssignIncident(req, {})).rejects.toThrow(
       "Incident is already assigned to user",
     );
   });
@@ -206,7 +204,7 @@ describe("checkAssignIncident", () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
     mockFindIncidentById.mockResolvedValue({});
     mockFindUserById.mockResolvedValue(null);
-    await expect(checkAssignIncident(req, {})).rejects.toThrow(
+    await expect(logic.checkAssignIncident(req, {})).rejects.toThrow(
       "Invalid user id",
     );
   });
@@ -220,17 +218,18 @@ describe("_assignIncident", () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
     mockFindIncidentById.mockResolvedValue({});
     mockAssignIncidentById.mockResolvedValue({});
-    const result = await _assignIncident(req, {});
+    const result = await logic._assignIncident(req, {});
     expect(result).toBeUndefined();
   });
   test("should throw error if the assignIncident is not found", async () => {
     const req = { data: { userId: "abcd-123", incidentID: " asbnsd=12" } };
     mockFindIncidentById.mockResolvedValue(null);
-    await expect(_assignIncident(req, {})).rejects.toThrow(
+    await expect(logic._assignIncident(req, {})).rejects.toThrow(
       "Incident not found",
     );
   });
 });
+
 describe("_reportIncidentAction", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -249,7 +248,7 @@ describe("_reportIncidentAction", () => {
     mockCreateReport.mockResolvedValue({});
     mockCreateIncident.mockResolvedValue({});
     mockFindIncidentById.mockResolvedValue({});
-    const result = await _reportIncidentAction(req, {});
+    const result = await logic._reportIncidentAction(req, {});
     expect(result).toEqual({
       ID: req.data.incidentID,
       message: "Incident Successfully reported",
@@ -266,10 +265,7 @@ describe("_reportIncidentAction", () => {
       },
     };
     mockFindReportById.mockResolvedValue({});
-    mockCreateReport.mockResolvedValue({});
-    mockCreateIncident.mockResolvedValue({});
-    mockFindIncidentById.mockResolvedValue({});
-    const result = await _reportIncidentAction(req, {});
+    const result = await logic._reportIncidentAction(req, {});
     expect(result).toEqual({
       ID: req.data.incidentID,
       message: "Report Incident already exists",
@@ -284,7 +280,7 @@ describe("_reportIncidentAction", () => {
         type: "SYSTEM_OUTAGE",
       },
     };
-    await expect(_reportIncidentAction(req, {})).rejects.toThrow(
+    await expect(logic._reportIncidentAction(req, {})).rejects.toThrow(
       "incidentID is required",
     );
   });
@@ -297,7 +293,7 @@ describe("_reportIncidentAction", () => {
         type: "SYSTEM_OUTAGE",
       },
     };
-    await expect(_reportIncidentAction(req, {})).rejects.toThrow(
+    await expect(logic._reportIncidentAction(req, {})).rejects.toThrow(
       "title is required",
     );
   });
@@ -310,7 +306,7 @@ describe("_reportIncidentAction", () => {
         type: "SYSTEM_OUTAGE",
       },
     };
-    await expect(_reportIncidentAction(req, {})).rejects.toThrow(
+    await expect(logic._reportIncidentAction(req, {})).rejects.toThrow(
       "description is required",
     );
   });
@@ -323,7 +319,7 @@ describe("_reportIncidentAction", () => {
         description: "there is a log in error on tha main page",
       },
     };
-    await expect(_reportIncidentAction(req, {})).rejects.toThrow(
+    await expect(logic._reportIncidentAction(req, {})).rejects.toThrow(
       "type is required",
     );
   });
@@ -343,7 +339,7 @@ describe("_reportIncidentAction", () => {
     mockCreateIncident.mockResolvedValue({});
     mockFindIncidentById.mockResolvedValue(null);
 
-    await expect(_reportIncidentAction(req, {})).rejects.toThrow(
+    await expect(logic._reportIncidentAction(req, {})).rejects.toThrow(
       "PERSIST_FAILED",
     );
   });
@@ -361,7 +357,7 @@ describe("_reportIncidentAction", () => {
     mockFindReportById.mockResolvedValue(null);
     mockCreateReport.mockRejectedValue(new Error("Database error"));
 
-    await expect(_reportIncidentAction(req, {})).rejects.toThrow(
+    await expect(logic._reportIncidentAction(req, {})).rejects.toThrow(
       "PERSIST_FAILED",
     );
   });
