@@ -6,50 +6,43 @@ const LOG = cds.log("report-service");
 const { createAuditLogger } = require("../../utils/audit-logger");
 const ReportRepository = require("./report-repository");
 
-/**
- * Returns total/open/closed incident counts and consistency check flag.
- * @param {import('@sap/cds/apis/services').Request} req
- * @param {Record<string, any>} entities
- * @returns {{totalIncidents:number, openIncidents:number, closedIncidents:number, isConsistent:boolean}}
- */
-const incidentStats = async (req, entities) => {
-  const reportRepository = new ReportRepository(entities);
-  const auditLogger = createAuditLogger(entities);
 
-  const totalIncidents = await reportRepository.totalIncidents();
-  const openIncidents = await reportRepository.openIncidents();
-  const closedIncidents = await reportRepository.closedIncidents();
-  const isConsistent = totalIncidents == openIncidents + closedIncidents;
+ class ReportLogic  {
+    constructor(entities) {
+      this.repo = new ReportRepository(entities)
+      this.auditLogger = createAuditLogger(entities)
+    }
+    async incidentStats()  {
+    
+      const totalIncidents = await this.repo.totalIncidents();
+      const openIncidents = await this.repo.openIncidents();
+      const closedIncidents = await this.repo.closedIncidents();
+      const isConsistent = totalIncidents == openIncidents + closedIncidents;
+    
+      await this.auditLogger("Incidents", null, "GET", null, null, null);
+    
+      LOG.info("Incidents stats retrieved", {
+        entity: "Incidents",
+        totalIncidents,
+        openIncidents,
+        closedIncidents,
+      });
+    
+      return {
+        totalIncidents,
+        openIncidents,
+        closedIncidents,
+        isConsistent,
+      };
 
-  await auditLogger("Incidents", null, "GET", null, null, null);
+}
 
-  LOG.info("Incidents stats retrieved", {
-    entity: "Incidents",
-    totalIncidents,
-    openIncidents,
-    closedIncidents,
-  });
 
-  return {
-    totalIncidents,
-    openIncidents,
-    closedIncidents,
-    isConsistent,
-  };
-};
+async avgResolutionTimeByType ()  {
 
-/**
- * Returns average resolution time and count grouped by incident type.
- * @param {import('@sap/cds/apis/services').Request} req
- * @param {Record<string, any>} entities
- */
-const avgResolutionTimeByType = async (req, entities) => {
-  const reportRepository = new ReportRepository(entities);
-  const auditLogger = createAuditLogger(entities);
+  const result = await this.repo.avgResolutionTimeByType();
 
-  const result = await reportRepository.avgResolutionTimeByType();
-
-  await auditLogger("IncidentResolveTime", null, "GET", null, null, null);
+  await this.auditLogger("IncidentResolveTime", null, "GET", null, null, null);
 
   LOG.info("Average resolution time by type retrieved", {
     entity: "IncidentResolveTime",
@@ -59,18 +52,11 @@ const avgResolutionTimeByType = async (req, entities) => {
   return result;
 };
 
-/**
- * Returns open incident counts grouped by priority.
- * @param {import('@sap/cds/apis/services').Request} req
- * @param {Record<string, any>} entities
- */
-const incidentsByPriority = async (req, entities) => {
-  const reportRepository = new ReportRepository(entities);
-  const auditLogger = createAuditLogger(entities);
+async incidentsByPriority() {
 
-  const result = await reportRepository.incidentsByPriority();
+  const result = await this.repo.incidentsByPriority();
 
-  await auditLogger("Incidents", null, "GET", null, null, null);
+  await this.auditLogger("Incidents", null, "GET", null, null, null);
 
   LOG.info("Incidents by priority retrieved", {
     entity: "Incidents",
@@ -80,8 +66,6 @@ const incidentsByPriority = async (req, entities) => {
   return result;
 };
 
-module.exports = {
-  incidentStats,
-  avgResolutionTimeByType,
-  incidentsByPriority,
-};
+  }
+
+  module.exports = ReportLogic

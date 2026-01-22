@@ -4,35 +4,25 @@
  */
 const cds = require("@sap/cds");
 
-
-const { _assignIncident, _closeIncident, _reportIncidentAction, _reopenIncident, checkIncident, checkAssignIncident, advancedSearch } = require('./lib/incident-logic')
-const  {_runScheduledJob} = require('./lib/jobs')
-
-
+const IncidentLogic = require("./lib/incident-logic");
+const { _runScheduledJob } = require("./lib/jobs");
 
 /** Service implementation for Incident operations. */
 class IncidentService extends cds.ApplicationService {
   async init() {
-    const entities = this.entities;
-    
-    this.before('READ', 'Incidents', async(req) => advancedSearch(req))
-    this.before("closeIncident", async (req) => await checkIncident(req, entities));
+    const incidentLogic = new IncidentLogic(this.entities);
 
-    this.on("closeIncident", async (req) => await _closeIncident(req, entities));
-    
-    this.on('reopenIncident', async (req) => await _reopenIncident(req, entities));
-    
-    this.before("assignIncident", async (req) => await checkAssignIncident(req, entities));
-    
-    this.on("assignIncident", async (req) => await _assignIncident(req, entities));
-    
-    this.on("ReportIncidentAction", async (req) => await _reportIncidentAction(req, entities));
-    
-    this.on("runScheduledJob", async (req) => await _runScheduledJob(req));
+    this.before("READ", "Incidents", (req) => incidentLogic.advancedSearch(req));
+    this.before("closeIncident", (req) => incidentLogic.checkIncident(req));
+    this.on("closeIncident", (req) => incidentLogic._closeIncident(req));
+    this.on("reopenIncident", (req) => incidentLogic._reopenIncident(req));
+    this.before("assignIncident", (req) => incidentLogic.checkAssignIncident(req));
+    this.on("assignIncident", (req) => incidentLogic._assignIncident(req));
+    this.on("ReportIncidentAction", (req) => incidentLogic._reportIncidentAction(req));
+    this.on("runScheduledJob", (req) => _runScheduledJob(req));
+
     return super.init();
   }
-
-
 }
 
 module.exports = IncidentService;
