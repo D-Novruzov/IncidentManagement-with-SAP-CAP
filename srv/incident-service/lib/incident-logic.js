@@ -5,12 +5,9 @@
 const cds = require("@sap/cds");
 const LOG = cds.log("incident-service");
 
-const {
-  PRIORITY_BY_TYPE,
-  SLA_DURATION_HOURS,
-} = require("../../config/sla-config");
-const { createAuditLogger } = require("../../utils/audit-logger");
-const { IncidentRepository } = require("./incident-repository");
+const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require('../../config/sla-config');
+const { createAuditLogger } = require('../../utils/audit-logger');
+const { IncidentRepository } = require('./incident-repository');
 
 class IncidentLogic {
   constructor(entities) {
@@ -192,8 +189,8 @@ class IncidentLogic {
     const incident = await this.repo.findIncidentById(incidentID);
 
     if (!incident) {
-      LOG.error("Incident not found during assignment", { incidentID });
-      throw cds.error({ code: 404, message: "Incident not found" });
+      LOG.error('Incident not found during assignment', { incidentID });
+      throw cds.error({ code: 404, message: 'Incident not found' });
     }
 
     const oldAssignee = incident.assignedTo_userId;
