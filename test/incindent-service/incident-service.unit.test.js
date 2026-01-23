@@ -10,7 +10,7 @@ const mockAssignIncidentById = jest.fn();
 const mockCreateReport = jest.fn();
 const mockCreateIncident = jest.fn();
 
-jest.mock("../srv/incident-service/lib/incident-repository", () => ({
+jest.mock("../../srv/incident-service/lib/incident-repository", () => ({
   IncidentRepository: jest.fn().mockImplementation(() => ({
     findReportById: mockFindReportById,
     closeIncident: mockCloseIncident,
@@ -26,14 +26,14 @@ jest.mock("../srv/incident-service/lib/incident-repository", () => ({
   })),
 }));
 
-jest.mock("../srv/utils/audit-logger", () => ({
+jest.mock("../../srv/utils/audit-logger", () => ({
   createAuditLogger: () => jest.fn().mockResolvedValue(undefined),
 }));
 
 const cds = require("@sap/cds");
 cds.tx = jest.fn((req, callback) => Promise.resolve(callback({})));
 
-const IncidentLogic = require("../srv/incident-service/lib/incident-logic");
+const IncidentLogic = require("../../srv/incident-service/lib/incident-logic");
 
 let logic;
 
@@ -100,7 +100,9 @@ describe("_checkIncident", () => {
 
     const req = { data: { incidentId: "abc-123" } };
 
-    await expect(logic.checkIncident(req, {})).rejects.toThrow("Incident not found");
+    await expect(logic.checkIncident(req, {})).rejects.toThrow(
+      "Incident not found",
+    );
   });
 });
 

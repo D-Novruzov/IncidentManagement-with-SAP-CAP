@@ -10,7 +10,7 @@ class ReportRepository {
     const result = await cds.run(
       SELECT.from(this.Incidents).columns([
         { func: "count", args: [{ ref: ["ID"] }], as: "count" },
-      ])
+      ]),
     );
     return result[0].count;
   }
@@ -18,7 +18,7 @@ class ReportRepository {
     const result = await cds.run(
       SELECT.from(this.Incidents)
         .where({ status: "OPEN" })
-        .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }])
+        .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]),
     );
     return result[0].count;
   }
@@ -26,7 +26,7 @@ class ReportRepository {
     const result = await cds.run(
       SELECT.from(this.Incidents)
         .where({ status: "CLOSED" })
-        .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }])
+        .columns([{ func: "count", args: [{ ref: ["ID"] }], as: "count" }]),
     );
     return result[0].count;
   }
@@ -38,7 +38,7 @@ class ReportRepository {
           { func: "count", args: [{ ref: ["ID"] }], as: "count" },
           { func: "avg", args: [{ ref: ["timeSpent"] }], as: "avgTime" },
         ])
-        .groupBy("incidentType")
+        .groupBy("incidentType"),
     );
     return result;
   }
@@ -50,9 +50,9 @@ class ReportRepository {
           { ref: ["priority"], as: "Priority" },
           { func: "count", args: [{ ref: ["ID"] }], as: "count" },
         ])
-        .groupBy("priority")
+        .groupBy("priority"),
     );
     return result;
   }
 }
-module.exports = ReportRepository;
+module.exports = { ReportRepository };
