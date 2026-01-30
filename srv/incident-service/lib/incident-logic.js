@@ -8,6 +8,7 @@ const LOG = cds.log("incident-service");
 const { PRIORITY_BY_TYPE, SLA_DURATION_HOURS } = require('../../config/sla-config');
 const { createAuditLogger } = require('../../utils/audit-logger');
 const { IncidentRepository } = require('./incident-repository');
+const { SELECT } = require("@sap/cds/lib/ql/cds-ql");
 
 class IncidentLogic {
   constructor(entities) {
@@ -283,7 +284,7 @@ class IncidentLogic {
 
       // Audit log
       await this.auditLogger("Incident", incidentID, "CREATE", null, null, null);
-
+      
       return {
         ID: incidentID,
         message: "Incident Successfully reported",

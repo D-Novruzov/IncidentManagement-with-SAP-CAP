@@ -131,3 +131,12 @@ const priority = ["LOW",
     return "ONTRACK";
   }
 }
+
+// Export functions for use by the service and for unit testing
+module.exports = {
+  _runScheduledJob,
+  runScheduledJob,
+  cleanupClosedIncidents,
+  setSLAProperties,
+  UpdateSlaStatus,
+};

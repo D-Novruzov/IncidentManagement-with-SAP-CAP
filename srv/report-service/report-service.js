@@ -14,7 +14,7 @@ class ReportService extends cds.ApplicationService {
     this.on("incidentStats", () => reportLogic.incidentStats());
     this.on("avgResolutionTimeByType", () => reportLogic.avgResolutionTimeByType());
     this.on("incidentsByPriority", () => reportLogic.incidentsByPriority());
-
+    
     return super.init();
   }
 }
